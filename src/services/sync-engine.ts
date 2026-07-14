@@ -302,27 +302,21 @@ export class SyncEngine {
         
         const createdAtDate = new Date((sub.created_at as any as number) * 1000);
         
-        upsertOperations.push(
-          prisma.submission.upsert({
-            where: { submissionId: String(sub.id) },
-            update: { isLatestAccepted },
-            create: {
-              submissionId: String(sub.id),
-              userId,
-              problemId,
-              language: sub.language || "unknown",
-              status: sub.status || "Unknown",
-              statusCode: sub.status_code,
-              score: sub.score || 0,
-              createdAt: createdAtDate,
-              timeFromStart: sub.time_from_start || null,
-              duringContest: sub.in_contest_bounds ?? true,
-              testcaseMessages: sub.testcase_message ? JSON.stringify(sub.testcase_message) : null,
-              isLatestAccepted,
-              viewUrl: `/submissions/${sub.id}`,
-            },
-          })
-        );
+        upsertOperations.push({
+          submissionId: String(sub.id),
+          userId,
+          problemId,
+          language: sub.language || "unknown",
+          status: sub.status || "Unknown",
+          statusCode: sub.status_code,
+          score: sub.score || 0,
+          createdAt: createdAtDate,
+          timeFromStart: sub.time_from_start || null,
+          duringContest: sub.in_contest_bounds ?? true,
+          testcaseMessages: sub.testcase_message ? JSON.stringify(sub.testcase_message) : null,
+          isLatestAccepted,
+          viewUrl: `/submissions/${sub.id}`,
+        });
       }
       
       // 4. Execute Unmarks
@@ -338,10 +332,13 @@ export class SyncEngine {
       }
       
       // 5. Execute Upserts in chunks
-      const chunkSize = 50;
+      const chunkSize = 200;
       for (let i = 0; i < upsertOperations.length; i += chunkSize) {
           const chunk = upsertOperations.slice(i, i + chunkSize);
-          await prisma.$transaction(chunk);
+          await prisma.submission.createMany({
+              data: chunk,
+              skipDuplicates: true,
+          });
           this.emitProgress(
              "saving_to_database",
              `Saving submission metadata (${Math.min(i + chunkSize, upsertOperations.length)}/${upsertOperations.length})...`,
