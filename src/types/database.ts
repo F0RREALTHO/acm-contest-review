@@ -91,10 +91,12 @@ export interface ParticipantProfile {
   id: string;
   username: string;
   team: string | null;
+  contestName?: string | null;
   totalSolved: number;
   totalProblems: number;
   weeks: ParticipantWeek[];
   stats: ParticipantStats;
+  leaderboard?: any;
 }
 
 export interface ParticipantWeek {
