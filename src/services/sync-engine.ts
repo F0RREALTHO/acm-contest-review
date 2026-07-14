@@ -246,95 +246,108 @@ export class SyncEngine {
       console.log("Saving submissions...");
       const latestAcceptedMap = new Set<string>();
 
-      for (let i = 0; i < newSubmissions.length; i++) {
-        const sub = newSubmissions[i];
-
-        this.emitProgress(
-          "saving_to_database",
-          `Saving submission metadata (${i + 1}/${newSubmissions.length})...`,
-          i + 1,
-          newSubmissions.length
-        );
-        const username = sub.hacker_username || sub.hacker || `user_${sub.hacker_id}`;
-        const existingUser = await prisma.user.findUnique({
-          where: { username },
-          select: { id: true },
-        });
-
-        let userId: string;
-        if (existingUser) {
-          userId = existingUser.id;
-        } else {
-          const newUser = await prisma.user.create({
-            data: { username },
+      // 1. Bulk ensure Users exist
+      const uniqueUsernames = Array.from(new Set(newSubmissions.map(s => s.hacker_username || s.hacker || `user_${s.hacker_id}`)));
+      const existingUsers = await prisma.user.findMany({ where: { username: { in: uniqueUsernames } } });
+      const existingUserMap = new Map(existingUsers.map(u => [u.username, u.id]));
+      
+      const missingUsernames = uniqueUsernames.filter(u => !existingUserMap.has(u));
+      if (missingUsernames.length > 0) {
+          await prisma.user.createMany({
+              data: missingUsernames.map(username => ({ username })),
+              skipDuplicates: true
           });
-          userId = newUser.id;
-          participantsAdded++;
-        }
-
-        // Resolve problem ID
-        const challengeSlug = sub.challenge?.slug || sub.challenge_slug || "";
-        let problemId = problemMap.get(challengeSlug);
-
-        if (!problemId) {
-          // Create problem if it doesn't exist (edge case)
+          const newlyCreatedUsers = await prisma.user.findMany({ where: { username: { in: missingUsernames } } });
+          newlyCreatedUsers.forEach(u => existingUserMap.set(u.username, u.id));
+          participantsAdded += missingUsernames.length;
+      }
+      
+      // 2. Bulk ensure Problems exist
+      const uniqueProblemSlugs = Array.from(new Set(newSubmissions.map(s => s.challenge?.slug || s.challenge_slug || "")));
+      const missingProblemSlugs = uniqueProblemSlugs.filter(slug => !problemMap.has(slug));
+      for (const slug of missingProblemSlugs) {
+          const sub = newSubmissions.find(s => (s.challenge?.slug || s.challenge_slug || "") === slug);
           const newProblem = await prisma.problem.create({
             data: {
-              name: sub.challenge?.name || challengeSlug,
-              slug: challengeSlug,
+              name: sub?.challenge?.name || slug,
+              slug: slug,
               contestId: contest.id,
               week: 1,
             },
           });
-          problemId = newProblem.id;
-          problemMap.set(challengeSlug, problemId);
-        }
-
-        // O(n) mapping of latest accepted
+          problemMap.set(slug, newProblem.id);
+      }
+      
+      // 3. Pre-calculate isLatestAccepted and prepare operations
+      const upsertOperations = [];
+      const unmarkPairs = [];
+      
+      for (let i = 0; i < newSubmissions.length; i++) {
+        const sub = newSubmissions[i];
+        const username = sub.hacker_username || sub.hacker || `user_${sub.hacker_id}`;
+        const userId = existingUserMap.get(username)!;
+        const challengeSlug = sub.challenge?.slug || sub.challenge_slug || "";
+        const problemId = problemMap.get(challengeSlug)!;
+        
         let isLatestAccepted = false;
         if (sub.status === "Accepted") {
           const key = `${userId}_${problemId}`;
           if (!latestAcceptedMap.has(key)) {
             latestAcceptedMap.add(key);
             isLatestAccepted = true;
-            
-            // Unmark previous latest accepted for this user/problem in the database
-            await prisma.submission.updateMany({
-              where: { userId, problemId, isLatestAccepted: true },
-              data: { isLatestAccepted: false }
-            });
+            unmarkPairs.push({ userId, problemId });
           }
-        }
-
-        const createdAtDate = new Date((sub.created_at as any as number) * 1000);
-
-        await prisma.submission.upsert({
-          where: { submissionId: String(sub.id) },
-          update: {
-            isLatestAccepted
-          },
-          create: {
-            submissionId: String(sub.id),
-            userId,
-            problemId,
-            language: sub.language || "unknown",
-            status: sub.status || "Unknown",
-            statusCode: sub.status_code,
-            score: sub.score || 0,
-            createdAt: createdAtDate,
-            timeFromStart: sub.time_from_start || null,
-            duringContest: sub.in_contest_bounds ?? true,
-            testcaseMessages: sub.testcase_message
-              ? JSON.stringify(sub.testcase_message)
-              : null,
-            isLatestAccepted,
-            viewUrl: `/submissions/${sub.id}`,
-          },
-        });
-
-        if (sub.status === "Accepted") {
           acceptedAdded++;
         }
+        
+        const createdAtDate = new Date((sub.created_at as any as number) * 1000);
+        
+        upsertOperations.push(
+          prisma.submission.upsert({
+            where: { submissionId: String(sub.id) },
+            update: { isLatestAccepted },
+            create: {
+              submissionId: String(sub.id),
+              userId,
+              problemId,
+              language: sub.language || "unknown",
+              status: sub.status || "Unknown",
+              statusCode: sub.status_code,
+              score: sub.score || 0,
+              createdAt: createdAtDate,
+              timeFromStart: sub.time_from_start || null,
+              duringContest: sub.in_contest_bounds ?? true,
+              testcaseMessages: sub.testcase_message ? JSON.stringify(sub.testcase_message) : null,
+              isLatestAccepted,
+              viewUrl: `/submissions/${sub.id}`,
+            },
+          })
+        );
+      }
+      
+      // 4. Execute Unmarks
+      if (unmarkPairs.length > 0) {
+          const chunkSize = 50;
+          for (let i = 0; i < unmarkPairs.length; i += chunkSize) {
+             const chunk = unmarkPairs.slice(i, i + chunkSize);
+             await prisma.submission.updateMany({
+                 where: { OR: chunk, isLatestAccepted: true },
+                 data: { isLatestAccepted: false }
+             });
+          }
+      }
+      
+      // 5. Execute Upserts in chunks
+      const chunkSize = 50;
+      for (let i = 0; i < upsertOperations.length; i += chunkSize) {
+          const chunk = upsertOperations.slice(i, i + chunkSize);
+          await prisma.$transaction(chunk);
+          this.emitProgress(
+             "saving_to_database",
+             `Saving submission metadata (${Math.min(i + chunkSize, upsertOperations.length)}/${upsertOperations.length})...`,
+             Math.min(i + chunkSize, upsertOperations.length),
+             upsertOperations.length
+          );
       }
 
       // PHASE 5: Fetch Official Leaderboard
