@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="diamond" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#00A4E4"/>
+      <stop offset="100%" stop-color="#0077B5"/>
+    </linearGradient>
+    <linearGradient id="circle" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#5BC8F5"/>
+      <stop offset="100%" stop-color="#0088CC"/>
+    </linearGradient>
+  </defs>
+  <!-- Diamond shape -->
+  <rect x="29.3" y="29.3" width="141.4" height="141.4" rx="8" transform="rotate(45 100 100)" fill="url(#diamond)"/>
+  <!-- Circle -->
+  <circle cx="100" cy="100" r="58" fill="none" stroke="white" stroke-width="5"/>
+  <circle cx="100" cy="100" r="53" fill="url(#circle)"/>
+  <!-- ACM text -->
+  <text x="100" y="115" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="48" font-weight="bold" fill="white" letter-spacing="2">acm</text>
+</svg>

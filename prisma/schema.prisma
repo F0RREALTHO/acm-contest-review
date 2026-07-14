@@ -1,0 +1,153 @@
+// ACM Contest Review Portal — Prisma Schema
+// SQLite for development, PostgreSQL compatible
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Contest {
+  id            String   @id @default(cuid())
+  name          String
+  slug          String   @unique
+  description   String?
+  startTime     DateTime?
+  endTime       DateTime?
+  totalProblems Int      @default(0)
+  enabled       Boolean  @default(true)
+  icon          String?
+  displayOrder  Int      @default(0)
+  lastSync      DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  leaderboardEntries LeaderboardEntry[]
+  problems    Problem[]
+  syncLogs    SyncLog[]
+}
+
+model User {
+  id          String   @id @default(cuid())
+  username    String   @unique
+  team        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  submissions Submission[]
+}
+
+model Problem {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String
+  week        Int      @default(1)
+  contestId   String
+  maxScore    Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  contest     Contest  @relation(fields: [contestId], references: [id])
+  submissions Submission[]
+
+  @@unique([slug, contestId])
+  @@index([week])
+  @@index([contestId])
+}
+
+model Submission {
+  submissionId    String   @id
+  userId          String
+  problemId       String
+  language        String
+  status          String
+  statusCode      Int?
+  score           Float    @default(0)
+  createdAt       DateTime
+  insertTime      DateTime @default(now())
+  timeFromStart   Int?
+  duringContest   Boolean  @default(true)
+  testcaseMessages String?
+  isLatestAccepted Boolean  @default(false)
+  viewUrl         String?
+
+  user            User     @relation(fields: [userId], references: [id])
+  problem         Problem  @relation(fields: [problemId], references: [id])
+  review          Review?
+  sourceCache     SourceCodeCache?
+
+  @@index([userId, problemId, status, createdAt])
+  @@index([isLatestAccepted])
+  @@index([problemId, status])
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+  @@index([createdAt])
+}
+
+model Review {
+  id           String   @id @default(cuid())
+  submissionId String   @unique
+  reviewed  Boolean  @default(false)
+  flagged   Boolean  @default(false)
+  reason    String?
+  notes     String?
+  reviewedAt   DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  submission   Submission @relation(fields: [submissionId], references: [submissionId])
+}
+
+model SourceCodeCache {
+  submissionId        String   @id
+  sourceCode          String?
+  status              String   @default("PENDING")
+  downloadAttempts    Int      @default(0)
+  lastAttempt         DateTime?
+  downloadedAt        DateTime?
+  
+  submission          Submission @relation(fields: [submissionId], references: [submissionId], onDelete: Cascade)
+  
+  @@index([status])
+}
+
+model SyncLog {
+  id                  String   @id @default(cuid())
+  contestId           String
+  lastSuccessfulSync  DateTime?
+  newestSubmissionId  String?
+  newestSubmissionTime DateTime?
+  submissionsAdded    Int      @default(0)
+  participantsAdded   Int      @default(0)
+  acceptedAdded       Int      @default(0)
+  duration            Int      @default(0)
+  syncStatus          String   @default("in_progress")
+  errorMessage        String?
+  createdAt           DateTime @default(now())
+
+  contest             Contest  @relation(fields: [contestId], references: [id])
+
+  @@index([contestId, createdAt])
+}
+
+
+
+model LeaderboardEntry {
+  id            String   @id @default(cuid())
+  contestId     String
+  contest       Contest  @relation(fields: [contestId], references: [id])
+  username      String
+  hrRank        Int
+  officialRank  Int
+  score         Float
+  timeTaken     Int
+  avatar        String?
+  country       String?
+  updatedAt     DateTime @updatedAt
+
+  @@unique([contestId, username])
+  @@index([contestId, officialRank])
+}
