@@ -35,12 +35,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Contest not found" }, { status: 404 });
     }
 
-    // Start async without awaiting the whole sync
-    startSync({
+    // Await startSync so Vercel doesn't kill the background process
+    await startSync({
       contestSlug: targetContest.slug,
       cookie,
       fullSync: false
-    }).catch(console.error);
+    });
 
     return NextResponse.json({ success: true, message: "Sync started in background" });
   } catch (error) {
