@@ -33,13 +33,6 @@ async function main() {
     console.log(`Upserted contest: ${contest.name}`);
   }
 
-  // Ensure default settings exist
-  await prisma.settings.upsert({
-    where: { id: "default" },
-    update: {},
-    create: { id: "default" },
-  });
-  console.log("Upserted default settings");
 }
 
 main()
