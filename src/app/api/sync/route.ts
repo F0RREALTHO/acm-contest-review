@@ -21,22 +21,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get settings
-    const settings = await prisma.settings.findUnique({
-      where: { id: "default" },
-    });
+    // Get cookie from environment
+    const cookie = process.env.HR_SESSION_COOKIE;
 
-    if (!settings?.cookie) {
+    if (!cookie) {
       return NextResponse.json(
-        { error: "Please configure your session cookie in Settings" },
-        { status: 400 }
+        { error: "HR_SESSION_COOKIE is not configured in the environment." },
+        { status: 500 }
       );
     }
 
     // Start sync in background (don't await)
     startSync({
       contestSlug,
-      cookie: settings.cookie,
+      cookie,
       fullSync: fullSync || false,
     }).catch((err) => {
       console.error("Sync error:", err);
