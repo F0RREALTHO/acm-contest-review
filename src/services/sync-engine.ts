@@ -364,21 +364,21 @@ export class SyncEngine {
       });
 
       // Insert new entries
-      for (let i = 0; i < officialLeaderboard.length; i++) {
-        const entry = officialLeaderboard[i];
-        
-        await prisma.leaderboardEntry.create({
-          data: {
-            contestId: contest.id,
-            username: entry.hacker,
-            hrRank: entry.rank,
-            officialRank: entry.index + 1,
-            score: entry.score,
-            timeTaken: entry.time_taken,
-            avatar: entry.avatar || null,
-            country: entry.country || null,
-          }
-        });
+      if (officialLeaderboard.length > 0) {
+          const dataToInsert = officialLeaderboard.map((entry, index) => ({
+             contestId: contest.id,
+             username: entry.hacker,
+             hrRank: entry.rank,
+             officialRank: entry.index + 1,
+             score: entry.score,
+             timeTaken: entry.time_taken,
+             avatar: entry.avatar || null,
+             country: entry.country || null,
+          }));
+
+          await prisma.leaderboardEntry.createMany({
+             data: dataToInsert,
+          });
       }
 
       // PHASE 6: Update SyncLog
