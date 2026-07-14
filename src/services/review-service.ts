@@ -142,7 +142,7 @@ export class ReviewService {
           submission: {
             include: {
               user: { select: { username: true } },
-              problem: { select: { name: true, slug: true, week: true, contest: { select: { slug: true } } } },
+              problem: { select: { name: true, slug: true, week: true, contest: { select: { slug: true, name: true } } } },
             },
           },
         },

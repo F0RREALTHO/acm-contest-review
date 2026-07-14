@@ -12,7 +12,7 @@ interface FlaggedSubmission {
   submission: {
     language: string;
     user: { username: string };
-    problem: { name: string; contest: { slug: string } };
+    problem: { name: string; contest: { slug: string; name: string } };
   };
 }
 
