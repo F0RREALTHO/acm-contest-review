@@ -31,18 +31,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Start sync in background (don't await)
-    startSync({
+    // Start sync and await it so Vercel doesn't kill the background process
+    await startSync({
       contestSlug,
       cookie,
       fullSync: fullSync || false,
-    }).catch((err) => {
-      console.error("Sync error:", err);
     });
 
     return NextResponse.json({
-      status: "started",
-      message: "Sync started successfully",
+      status: "finished",
+      message: "Sync completed successfully",
     });
   } catch (error) {
     return NextResponse.json(
