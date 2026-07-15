@@ -156,7 +156,7 @@ export function ContestBoard({ slug }: { slug: string }) {
               <tbody>
                 {data.data.map((p: any, index: number) => {
                   const isSubmissionFlagged = p.status === "FLAGGED";
-                  const isParticipantFlagged = !!p.participantFlag;
+                  const isParticipantFlagged = !!p.participantFlag || isSubmissionFlagged;
                   const rank = formatRank(p.officialRank);
 
                   return (
