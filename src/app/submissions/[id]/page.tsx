@@ -8,7 +8,7 @@ import { useSubmission } from "@/hooks/use-submissions";
 import { useContest } from "@/providers/contest-provider";
 import { useQuery } from "@tanstack/react-query";
 import { MONACO_LANGUAGE_MAP } from "@/lib/constants";
-import { ArrowLeft, ChevronLeft, ChevronRight, Flag, Loader2, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Flag, Loader2, CheckCircle2, ArrowRightLeft } from "lucide-react";
 import { formatDateTime } from "@/lib/utils";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CompareModal } from "@/components/shared/compare-modal";
 
 const Editor = dynamic(() => import("@monaco-editor/react").then((m) => m.default), {
   ssr: false,
@@ -48,6 +49,9 @@ export default function SubmissionViewerPage({
   const [showFlagDialog, setShowFlagDialog] = useState(false);
   const [flagReason, setFlagReason] = useState("");
   const [flagNotes, setFlagNotes] = useState("");
+  
+  // Compare Modal State
+  const [showCompareModal, setShowCompareModal] = useState(false);
 
   // Fetch participant profile to get next/prev
   const { data: profile } = useQuery({
@@ -225,6 +229,15 @@ export default function SubmissionViewerPage({
           <Button 
             variant="outline" 
             size="sm" 
+            onClick={() => setShowCompareModal(true)} 
+            className="h-7 border-blue-900/50 text-blue-500 hover:bg-blue-500/10 hover:text-blue-400 text-xs px-2"
+          >
+            <ArrowRightLeft className="h-3 w-3 sm:mr-1" /> <span className="hidden sm:inline">Compare</span>
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            size="sm" 
             onClick={openFlagDialog} 
             disabled={isFlagging}
             className="h-7 border-rose-900/50 text-rose-500 hover:bg-rose-500/10 hover:text-rose-400 text-xs px-2"
@@ -306,6 +319,15 @@ export default function SubmissionViewerPage({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {submission && submission.problemId && (
+        <CompareModal
+          isOpen={showCompareModal}
+          onClose={() => setShowCompareModal(false)}
+          baseSubmissionId={id}
+          problemId={submission.problemId}
+        />
+      )}
     </div>
   );
 }

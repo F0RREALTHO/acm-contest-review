@@ -3,6 +3,7 @@
 import { use, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
+import { formatDateTime } from "@/lib/utils";
 import { useContest } from "@/providers/contest-provider";
 import { ArrowLeft, ChevronDown, Flag, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -179,12 +180,17 @@ export default function ParticipantDetailsPage({
                             <Link 
                               key={att.submissionId} 
                               href={`/submissions/${att.submissionId}?participant=${username}`}
-                              className="flex justify-between max-w-[200px] font-mono text-[11px] text-muted-foreground hover:bg-accent hover:text-primary px-2 py-1 rounded transition-colors -ml-2"
+                              className="flex justify-between items-center max-w-full font-mono text-[11px] text-muted-foreground hover:bg-accent hover:text-primary px-2 py-1 rounded transition-colors -ml-2"
                             >
                               <span className={att.status === "Accepted" ? "text-success font-semibold" : ""}>
                                 {att.status}
                               </span>
-                              <span>{att.language}</span>
+                              <div className="flex items-center gap-3">
+                                <span>{att.language}</span>
+                                <span className="text-[10px] text-muted-foreground/50 hidden sm:inline-block">
+                                  {formatDateTime(att.createdAt)}
+                                </span>
+                              </div>
                             </Link>
                           ))}
                         </div>
