@@ -107,7 +107,7 @@ export function ContestBoard({ slug }: { slug: string }) {
           {[
             { label: "Participants", value: data.data.length },
             { label: "Problems", value: data.contestTotalProblems || "-" },
-            { label: "Flagged", value: data.data.filter((p: any) => p.status === "FLAGGED").length, alert: true },
+            { label: "Flagged", value: data.data.filter((p: any) => p.status === "FLAGGED" || !!p.participantFlag).length, alert: true },
             { label: "Last Sync", value: "Just now" },
           ].map((stat, i) => (
             <div key={i} className="bg-card border border-border rounded-[18px] p-5 hover:-translate-y-0.5 transition-transform duration-150">
