@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
 
     // Await startSync so Vercel doesn't kill the background process
     await startSync({
-      contestSlug: targetContest.slug,
+      contestSlug,
       cookie,
       fullSync: false
     });
