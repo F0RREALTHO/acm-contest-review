@@ -50,7 +50,7 @@ export function Header() {
           <span className="text-sm font-medium text-muted-foreground hidden sm:block">Contest Review Dashboard</span>
         </div>
         
-        <nav className="flex items-center h-full">
+        <nav className="flex items-center h-full overflow-x-auto scrollbar-hide shrink-0 max-w-[50vw] sm:max-w-none">
           {/* Dynamic contest tabs */}
           {contests?.map((contest) => {
             const isActive = activeContest === contest.slug && pathname === "/";

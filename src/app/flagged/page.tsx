@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import { Flag, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 

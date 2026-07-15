@@ -182,7 +182,7 @@ export function ContestBoard({ slug }: { slug: string }) {
                       </td>
 
                       {/* Score */}
-                      <td className="px-5 py-2 font-mono text-[13px] text-right font-medium text-emerald-500">
+                      <td className="px-5 py-2 font-mono text-[14px] text-right font-bold text-emerald-400 drop-shadow-[0_0_12px_rgba(52,211,153,0.8)]">
                         {p.score}
                       </td>
 
