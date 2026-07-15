@@ -26,10 +26,17 @@ export class LeaderboardService {
     
     const users = await prisma.user.findMany({
       where: { username: { in: usernames } },
-      select: { id: true, username: true }
+      select: { 
+        id: true, 
+        username: true,
+        participantFlags: {
+          where: { contestId: contest.id },
+          take: 1
+        }
+      } as any
     });
-    const usernameToId = new Map(users.map(u => [u.username, u.id]));
-    const userIds = Array.from(usernameToId.values());
+    const usernameToUser = new Map(users.map((u: any) => [u.username, u]));
+    const userIds: string[] = Array.from(usernameToUser.values()).map((u: any) => u.id);
 
     const submissions = await prisma.submission.findMany({
       where: {
@@ -62,13 +69,16 @@ export class LeaderboardService {
     }
 
     const data = entries.map(entry => {
-      const userId = usernameToId.get(entry.username);
+      const user = usernameToUser.get(entry.username);
+      const userId = user?.id;
       const stats = userId ? userStats.get(userId) : null;
+      const participantFlag = (user as any)?.participantFlags?.[0] || null;
 
       return {
         ...entry,
         problemsSolved: stats?.solved.size || 0,
-        status: stats?.hasFlagged ? "FLAGGED" : "CLEAN"
+        status: stats?.hasFlagged ? "FLAGGED" : "CLEAN",
+        participantFlag
       };
     });
 
