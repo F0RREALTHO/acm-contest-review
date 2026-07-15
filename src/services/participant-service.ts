@@ -119,53 +119,53 @@ export class ParticipantService {
   }
 
   async getParticipantProfile(username: string, contestSlug?: string): Promise<ParticipantProfile | null> {
-    let user = await prisma.user.findUnique({
-      where: { username },
-    });
+    // Fetch user, contest, and leaderboard entry in parallel
+    const contestFilter = contestSlug ? { contest: { slug: contestSlug } } : {};
 
-    // Check if they are in the leaderboard
-    const contest = contestSlug ? await prisma.contest.findUnique({ where: { slug: contestSlug } }) : null;
-    const leaderboardEntry = contest ? await prisma.leaderboardEntry.findUnique({
-      where: { contestId_username: { contestId: contest.id, username } }
-    }) : null;
+    const [user, contest] = await Promise.all([
+      prisma.user.findUnique({ where: { username } }),
+      contestSlug
+        ? prisma.contest.findUnique({ where: { slug: contestSlug }, select: { id: true, name: true } })
+        : Promise.resolve(null),
+    ]);
 
-    if (!user && leaderboardEntry) {
-      // Create user on the fly if they exist in the leaderboard but haven't submitted anything
-      user = await prisma.user.create({
-        data: { username }
-      });
+    // Check leaderboard + maybe create user
+    const leaderboardEntry = contest
+      ? await prisma.leaderboardEntry.findUnique({
+          where: { contestId_username: { contestId: contest.id, username } },
+        })
+      : null;
+
+    let resolvedUser = user;
+    if (!resolvedUser && leaderboardEntry) {
+      resolvedUser = await prisma.user.create({ data: { username } });
     }
+    if (!resolvedUser) return null;
 
-    if (!user) return null;
+    // Fetch problems + submissions in parallel (the two heaviest queries)
+    const [problems, submissions] = await Promise.all([
+      prisma.problem.findMany({
+        where: contestSlug ? { contest: { slug: contestSlug } } : undefined,
+        orderBy: [{ week: "asc" }, { name: "asc" }],
+      }),
+      prisma.submission.findMany({
+        where: {
+          userId: resolvedUser.id,
+          ...(contestSlug ? { problem: { contest: { slug: contestSlug } } } : {}),
+        },
+        include: {
+          problem: { select: { name: true, slug: true, week: true } },
+        },
+        orderBy: { createdAt: "asc" },
+      }),
+    ]);
 
-    const totalProblems = await prisma.problem.count(
-      contestSlug ? { where: { contest: { slug: contestSlug } } } : undefined
+    // Compute totalSolved from the submissions we already have
+    const solvedProblemIds = new Set(
+      submissions.filter((s) => s.status === "Accepted").map((s) => s.problemId)
     );
-    const totalSolved = await prisma.submission.count({
-      where: {
-        userId: user.id,
-        status: "Accepted",
-        ...(contestSlug ? { problem: { contest: { slug: contestSlug } } } : {}),
-      },
-    });
-
-    // Get all problems grouped by week
-    const problems = await prisma.problem.findMany({
-      where: contestSlug ? { contest: { slug: contestSlug } } : undefined,
-      orderBy: [{ week: "asc" }, { name: "asc" }],
-    });
-
-    // Get all submissions for this user
-    const submissions = await prisma.submission.findMany({
-      where: { 
-        userId: user.id,
-        ...(contestSlug ? { problem: { contest: { slug: contestSlug } } } : {})
-      },
-      include: {
-        problem: { select: { name: true, slug: true, week: true } },
-      },
-      orderBy: { createdAt: "asc" },
-    });
+    const totalSolved = solvedProblemIds.size;
+    const totalProblems = problems.length;
 
     // Group by week
     const weekMap = new Map<number, ParticipantProblem[]>();
@@ -208,7 +208,7 @@ export class ParticipantService {
       ([week, probs]) => ({ week, problems: probs })
     );
 
-    // Compute stats
+    // Compute stats from in-memory data (no extra queries)
     const statusCounts = {
       accepted: submissions.filter((s) => s.status === "Accepted").length,
       wrongAnswer: submissions.filter((s) => s.status === "Wrong Answer").length,
@@ -243,9 +243,9 @@ export class ParticipantService {
     }
 
     return {
-      id: user.id,
-      username: user.username,
-      team: user.team,
+      id: resolvedUser.id,
+      username: resolvedUser.username,
+      team: resolvedUser.team,
       contestName: contest?.name || null,
       totalSolved,
       totalProblems,

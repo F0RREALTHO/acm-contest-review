@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     const latestLog = contest.syncLogs[0];
     const engineRunning = isSyncRunning();
 
-    let status: "synced" | "syncing" | "failed" = "synced";
+    let status: "synced" | "syncing" | "failed" | "not_synced" = "not_synced";
     let error: string | undefined = undefined;
     let stage: string | undefined = undefined;
     let processed: number | undefined = undefined;
@@ -59,6 +59,9 @@ export async function GET(request: NextRequest) {
       } else {
         status = "synced";
       }
+    } else if (engineRunning) {
+      status = "syncing";
+      stage = "Starting sync...";
     }
 
     return NextResponse.json({
