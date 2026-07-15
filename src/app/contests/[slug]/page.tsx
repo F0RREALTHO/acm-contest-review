@@ -64,7 +64,7 @@ export default function ContestParticipantListPage({
     <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
         <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">
+          <h1 className="text-2xl font-extrabold text-white tracking-tight drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
             {contestTitle}
           </h1>
           <SyncStatusBadge contestSlug={slug} />
@@ -88,14 +88,14 @@ export default function ContestParticipantListPage({
         <div className="border border-border rounded-lg bg-card overflow-hidden shadow-sm">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-border bg-muted/50">
-                <th className="px-5 py-3.5 font-semibold text-xs uppercase tracking-wider text-muted-foreground w-24">HR Rank</th>
-                <th className="px-5 py-3.5 font-semibold text-xs uppercase tracking-wider text-muted-foreground w-36">Official Rank ↑</th>
-                <th className="px-5 py-3.5 font-semibold text-xs uppercase tracking-wider text-muted-foreground">Hacker</th>
-                <th className="px-5 py-3.5 font-semibold text-xs uppercase tracking-wider text-muted-foreground text-right">Score</th>
-                <th className="px-5 py-3.5 font-semibold text-xs uppercase tracking-wider text-muted-foreground text-right">Time</th>
-                <th className="px-5 py-3.5 font-semibold text-xs uppercase tracking-wider text-muted-foreground text-center">Solved</th>
-                <th className="px-5 py-3.5 font-semibold text-xs uppercase tracking-wider text-muted-foreground text-right w-24">Status</th>
+              <tr className="border-b border-border/50">
+                <th className="px-5 py-4 font-bold text-[10px] uppercase tracking-[0.15em] text-muted-foreground w-24">HR Rank</th>
+                <th className="px-5 py-4 font-bold text-[10px] uppercase tracking-[0.15em] text-muted-foreground w-36">Official Rank ↑</th>
+                <th className="px-5 py-4 font-bold text-[10px] uppercase tracking-[0.15em] text-muted-foreground">Hacker</th>
+                <th className="px-5 py-4 font-bold text-[10px] uppercase tracking-[0.15em] text-muted-foreground text-right">Score</th>
+                <th className="px-5 py-4 font-bold text-[10px] uppercase tracking-[0.15em] text-muted-foreground text-right">Time</th>
+                <th className="px-5 py-4 font-bold text-[10px] uppercase tracking-[0.15em] text-muted-foreground text-center">Solved</th>
+                <th className="px-5 py-4 font-bold text-[10px] uppercase tracking-[0.15em] text-muted-foreground text-right w-24">Status</th>
               </tr>
             </thead>
             <tbody>
@@ -107,7 +107,7 @@ export default function ContestParticipantListPage({
                   <tr
                     key={p.username}
                     onClick={() => router.push(`/participants/${p.username}?contest=${slug}`)}
-                    className={`border-b border-border/40 last:border-0 hover:bg-slate-800/40 transition-colors cursor-pointer group ${
+                    className={`border-b border-border/30 last:border-0 hover:bg-white/[0.02] transition-colors cursor-pointer group ${
                       isFlagged ? "!bg-red-950/20 hover:!bg-red-900/30" : ""
                     }`}
                   >
@@ -118,7 +118,7 @@ export default function ContestParticipantListPage({
 
                     {/* Official Rank */}
                     <td className="px-5 py-4">
-                      <span className={`font-bold text-sm ${rank.color}`}>
+                      <span className={`font-bold text-sm drop-shadow-md ${rank.color}`}>
                         {rank.icon && <span className="mr-1.5">{rank.icon}</span>}
                         {rank.label}
                       </span>
@@ -146,7 +146,7 @@ export default function ContestParticipantListPage({
                     </td>
 
                     {/* Score */}
-                    <td className="px-5 py-4 font-mono text-sm text-right font-semibold text-emerald-400">
+                    <td className="px-5 py-4 font-mono text-base text-right font-bold text-emerald-400 drop-shadow-[0_0_12px_rgba(52,211,153,0.8)]">
                       {p.score}
                     </td>
 
@@ -164,11 +164,11 @@ export default function ContestParticipantListPage({
                     {/* Status */}
                     <td className="px-5 py-4 text-right">
                       {isFlagged ? (
-                        <span className="inline-flex items-center rounded-md bg-destructive/10 px-2 py-1 text-[10px] font-semibold text-destructive border border-destructive/20 uppercase tracking-wider">
+                        <span className="inline-flex items-center rounded-md bg-destructive/10 px-2 py-1 text-[10px] font-bold text-destructive border border-destructive/20 uppercase tracking-wider drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]">
                           Flagged
                         </span>
                       ) : (
-                        <span className="inline-flex items-center rounded-md bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold text-emerald-500 border border-emerald-500/20 uppercase tracking-wider">
+                        <span className="inline-flex items-center rounded-md bg-emerald-500/10 px-2 py-1 text-[10px] font-bold text-emerald-500 border border-emerald-500/20 uppercase tracking-wider drop-shadow-[0_0_8px_rgba(16,185,129,0.3)]">
                           Clean
                         </span>
                       )}

@@ -24,15 +24,18 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const requestedSlug = body.contestSlug;
 
-    const targetContest = requestedSlug 
-      ? await prisma.contest.findUnique({ where: { slug: requestedSlug } })
-      : await prisma.contest.findFirst({
-          where: { enabled: true },
-          orderBy: { displayOrder: "asc" }
-        });
+    let contestSlug = requestedSlug;
 
-    if (!targetContest) {
-      return NextResponse.json({ error: "Contest not found" }, { status: 404 });
+    if (!contestSlug) {
+      // No slug provided — pick the first enabled contest from DB
+      const targetContest = await prisma.contest.findFirst({
+        where: { enabled: true },
+        orderBy: { displayOrder: "asc" },
+      });
+      if (!targetContest) {
+        return NextResponse.json({ error: "No contest found to sync" }, { status: 404 });
+      }
+      contestSlug = targetContest.slug;
     }
 
     // Await startSync so Vercel doesn't kill the background process
