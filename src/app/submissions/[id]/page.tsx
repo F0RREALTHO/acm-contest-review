@@ -82,18 +82,15 @@ export default function SubmissionViewerPage({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ submissionId: id, priority: "HIGH" }),
-      }).then(() => {
-        const interval = setInterval(async () => {
-          const res = await fetch(`/api/submissions/download?submissionId=${id}`);
-          const status = await res.json();
-          if (status.status === "DONE" || status.status === "FAILED" || status.status === "RATE_LIMITED") {
-            clearInterval(interval);
-            setIsDownloading(false);
-            if (status.status === "DONE") refetch();
+      })
+        .then(async (res) => {
+          if (res.ok) {
+            await refetch();
           }
-        }, 1000);
-        return () => clearInterval(interval);
-      });
+        })
+        .finally(() => {
+          setIsDownloading(false);
+        });
     } else if (submission?.sourceCode) {
       setIsDownloading(false);
     }
