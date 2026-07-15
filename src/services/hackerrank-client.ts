@@ -40,12 +40,6 @@ export class HackerRankClient {
         ? this.cookie
         : `_hrank_session=${this.cookie}`;
 
-      console.log("================================");
-      console.log("Endpoint:", url);
-      console.log("REQUEST URL:", url);
-      console.log("COOKIE HEADER:", cookieHeader);
-      console.log("================================");
-
       const response = await fetch(url, {
         headers: {
           Cookie: cookieHeader,
@@ -56,15 +50,9 @@ export class HackerRankClient {
         },
       });
 
-      console.log("HTTP Status:", response.status);
-      console.log("Content-Type:", response.headers.get("content-type"));
-
       const body = await response.text();
-      console.log("RESPONSE PREVIEW:");
-      console.log(body.substring(0, 500));
 
       if (body.trim().toLowerCase().startsWith("<!doctype html>") || body.trim().toLowerCase().startsWith("<html")) {
-        console.log("Authentication failed.\nReceived HTML instead of JSON.");
         throw new Error("Authentication failed. Received HTML instead of JSON.");
       }
 
@@ -74,7 +62,7 @@ export class HackerRankClient {
 
       if (response.status >= 500 && retryCount < this.maxRetries) {
         const waitTime = Math.pow(2, retryCount) * 1000;
-        console.log(`Server error ${response.status}. Retrying in ${waitTime}ms...`);
+        console.log(`[HR] Server error ${response.status}, retrying in ${waitTime}ms...`);
         await this.delay(waitTime);
         return this.fetchWithRetry(url, retryCount + 1);
       }
@@ -93,12 +81,51 @@ export class HackerRankClient {
       if (retryCount < this.maxRetries && error instanceof TypeError) {
         // Network error — retry
         const waitTime = Math.pow(2, retryCount) * 1000;
-        console.log(`Network error. Retrying in ${waitTime}ms...`);
+        console.log(`[HR] Network error, retrying in ${waitTime}ms...`);
         await this.delay(waitTime);
         return this.fetchWithRetry(url, retryCount + 1);
       }
       throw error;
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Generic parallel page fetcher
+  // Fetches paginated API results with up to `concurrency` pages in flight.
+  // `fetchPage` should return { models: T[], total: number }.
+  // ---------------------------------------------------------------------------
+  private async fetchAllPages<T>(
+    fetchPage: (offset: number, limit: number) => Promise<{ models: T[]; total: number }>,
+    limit: number = 100,
+    concurrency: number = 5
+  ): Promise<T[]> {
+    // First page is always fetched alone so we know the total
+    const firstPage = await fetchPage(0, limit);
+    const allItems: T[] = [...firstPage.models];
+    const total = firstPage.total;
+
+    if (allItems.length >= total || firstPage.models.length < limit) {
+      return allItems;
+    }
+
+    // Build remaining offsets
+    const offsets: number[] = [];
+    for (let offset = limit; offset < total; offset += limit) {
+      offsets.push(offset);
+    }
+
+    // Fetch remaining pages in parallel batches
+    for (let i = 0; i < offsets.length; i += concurrency) {
+      const batch = offsets.slice(i, i + concurrency);
+      const pages = await Promise.all(
+        batch.map((offset) => fetchPage(offset, limit))
+      );
+      for (const page of pages) {
+        allItems.push(...page.models);
+      }
+    }
+
+    return allItems;
   }
 
   async getContest(slug: string): Promise<HRContestResponse> {
@@ -118,20 +145,11 @@ export class HackerRankClient {
   }
 
   async getAllChallenges(slug: string): Promise<HRChallengesResponse["models"]> {
-    const allChallenges: HRChallengesResponse["models"] = [];
-    let offset = 0;
-    const limit = 100;
-
-    while (true) {
-      const data = await this.getChallenges(slug, offset, limit);
-      allChallenges.push(...data.models);
-      if (allChallenges.length >= data.total || data.models.length < limit) {
-        break;
-      }
-      offset += limit;
-    }
-
-    return allChallenges;
+    return this.fetchAllPages(
+      (offset, limit) => this.getChallenges(slug, offset, limit),
+      100,
+      5
+    );
   }
 
   async getSubmissions(
@@ -144,6 +162,47 @@ export class HackerRankClient {
     return response.json();
   }
 
+  /**
+   * Fetch ALL submissions in parallel (full sync mode).
+   * Uses the generic parallel page fetcher — up to `concurrency` pages in flight.
+   */
+  async getAllSubmissionsParallel(
+    slug: string,
+    concurrency: number = 5,
+    onProgress?: (fetched: number, total: number) => void
+  ): Promise<{ models: HRSubmissionsResponse["models"]; total: number }> {
+    // First page alone to discover total
+    const firstPage = await this.getSubmissions(slug, 0, 100);
+    const total = firstPage.total;
+    const allModels = [...firstPage.models];
+
+    if (onProgress) onProgress(allModels.length, total);
+
+    if (allModels.length >= total || firstPage.models.length < 100) {
+      return { models: allModels, total };
+    }
+
+    // Build remaining offsets
+    const offsets: number[] = [];
+    for (let offset = 100; offset < total; offset += 100) {
+      offsets.push(offset);
+    }
+
+    // Fetch in parallel batches
+    for (let i = 0; i < offsets.length; i += concurrency) {
+      const batch = offsets.slice(i, i + concurrency);
+      const pages = await Promise.all(
+        batch.map((offset) => this.getSubmissions(slug, offset, 100))
+      );
+      for (const page of pages) {
+        allModels.push(...page.models);
+      }
+      if (onProgress) onProgress(allModels.length, total);
+    }
+
+    return { models: allModels, total };
+  }
+
   async getSubmissionDetail(
     contestSlug: string,
     challengeSlug: string,
@@ -153,6 +212,7 @@ export class HackerRankClient {
     const response = await this.fetchWithRetry(url);
     return response.json();
   }
+
   async getLeaderboard(
     slug: string,
     offset = 0,
@@ -164,22 +224,10 @@ export class HackerRankClient {
   }
 
   async getAllLeaderboardEntries(slug: string): Promise<any[]> {
-    const entries: any[] = [];
-    let offset = 0;
-    const limit = 100;
-
-    while (true) {
-      const data = await this.getLeaderboard(slug, offset, limit);
-      if (!data.models || data.models.length === 0) {
-        break;
-      }
-      entries.push(...data.models);
-      if (entries.length >= data.total || data.models.length < limit) {
-        break;
-      }
-      offset += limit;
-    }
-
-    return entries;
+    return this.fetchAllPages(
+      (offset, limit) => this.getLeaderboard(slug, offset, limit),
+      100,
+      5
+    );
   }
 }

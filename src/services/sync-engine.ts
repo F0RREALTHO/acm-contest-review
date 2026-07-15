@@ -29,7 +29,7 @@ export class SyncEngine {
   constructor(options: SyncOptions) {
     this.client = new HackerRankClient({
       cookie: options.cookie,
-      delayMs: 200,
+      delayMs: 50,
     });
     this.contestSlug = options.contestSlug;
   }
@@ -74,14 +74,12 @@ export class SyncEngine {
 
     let syncLogId: string | undefined;
 
-    console.log("Starting sync");
-    console.log("Contest:", this.contestSlug);
+    console.log(`[Sync] Starting sync for ${this.contestSlug}`);
 
     try {
       // PHASE 1: Fetch contest metadata
       this.emitProgress("fetching_contest", "Fetching contest information...", 0, null);
       const contestData = await this.client.getContest(this.contestSlug);
-      console.log("Contest fetched");
 
       const contestInfo = contestData.model;
 
@@ -116,9 +114,7 @@ export class SyncEngine {
       // PHASE 2: Fetch all challenges
       this.emitProgress("fetching_problems", "Fetching problems...", 0, null);
       const challenges = await this.client.getAllChallenges(this.contestSlug);
-      console.log("Problems fetched");
-      console.log("Problems:", challenges.length);
-      console.log("Saving problems...");
+      console.log(`[Sync] ${challenges.length} problems fetched`);
 
       for (let i = 0; i < challenges.length; i++) {
         const challenge = challenges[i];
@@ -157,47 +153,66 @@ export class SyncEngine {
       const knownNewestId = lastSync?.newestSubmissionId;
       const knownNewestTime = lastSync?.newestSubmissionTime;
 
-      // PHASE 3: Download submissions (newest to oldest)
+      // PHASE 3: Download submissions
       this.emitProgress("downloading_submissions", "Downloading submissions...", 0, null);
 
-      const newSubmissions: HRSubmission[] = [];
-      let offset = 0;
-      const limit = 100;
-      let stopPagination = false;
-      let totalSubmissions: number | null = null;
+      let newSubmissions: HRSubmission[];
 
-      while (!stopPagination) {
-        const page = await this.client.getSubmissions(this.contestSlug, offset, limit);
-        if (totalSubmissions === null) totalSubmissions = page.total;
+      if (!knownNewestId) {
+        // Full sync — use parallel fetcher (much faster)
+        const result = await this.client.getAllSubmissionsParallel(
+          this.contestSlug,
+          5,
+          (fetched, total) => {
+            this.emitProgress(
+              "downloading_submissions",
+              `Downloaded ${fetched}/${total} submissions...`,
+              fetched,
+              total
+            );
+          }
+        );
+        newSubmissions = result.models;
+      } else {
+        // Incremental sync — sequential, stop when we hit a known submission
+        newSubmissions = [];
+        let offset = 0;
+        const limit = 100;
+        let stopPagination = false;
+        let totalSubmissions: number | null = null;
 
-        for (const submission of page.models) {
-          const subId = String(submission.id);
-          const subTime = new Date((submission.created_at as any as number) * 1000);
+        while (!stopPagination) {
+          const page = await this.client.getSubmissions(this.contestSlug, offset, limit);
+          if (totalSubmissions === null) totalSubmissions = page.total;
 
-          if (knownNewestId && subId === knownNewestId && knownNewestTime && subTime.getTime() <= knownNewestTime.getTime()) {
-            stopPagination = true;
+          for (const submission of page.models) {
+            const subId = String(submission.id);
+            const subTime = new Date((submission.created_at as any as number) * 1000);
+
+            if (subId === knownNewestId && knownNewestTime && subTime.getTime() <= knownNewestTime.getTime()) {
+              stopPagination = true;
+              break;
+            }
+
+            newSubmissions.push(submission);
+          }
+
+          this.emitProgress(
+            "downloading_submissions",
+            `Downloaded ${newSubmissions.length} new submissions...`,
+            newSubmissions.length,
+            null
+          );
+
+          if (page.models.length < limit || stopPagination) {
             break;
           }
 
-          newSubmissions.push(submission);
+          offset += limit;
         }
-
-        this.emitProgress(
-          "downloading_submissions",
-          `Downloaded ${newSubmissions.length} new submissions...`,
-          newSubmissions.length,
-          knownNewestId ? null : totalSubmissions
-        );
-
-        if (page.models.length < limit || stopPagination) {
-          break;
-        }
-
-        offset += limit;
       }
 
-      console.log("Submissions fetched");
-      console.log("Submissions:", newSubmissions.length);
+      console.log(`[Sync] ${newSubmissions.length} submissions fetched`);
 
       if (newSubmissions.length === 0) {
         // Nothing new — update sync log and return
@@ -243,7 +258,7 @@ export class SyncEngine {
       });
       problems.forEach((p) => problemMap.set(p.slug, p.id));
 
-      console.log("Saving submissions...");
+      console.log(`[Sync] Saving ${newSubmissions.length} submissions...`);
       const latestAcceptedMap = new Set<string>();
 
       // 1. Bulk ensure Users exist
@@ -352,7 +367,7 @@ export class SyncEngine {
 
       const officialLeaderboard = await this.client.getAllLeaderboardEntries(this.contestSlug);
 
-      console.log(`Fetched ${officialLeaderboard.length} official leaderboard entries.`);
+      console.log(`[Sync] ${officialLeaderboard.length} leaderboard entries fetched`);
       this.emitProgress("saving_to_database", "Saving official leaderboard...", 0, officialLeaderboard.length);
 
       // Delete existing leaderboard entries for this contest
