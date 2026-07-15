@@ -39,7 +39,6 @@ export class ParticipantService {
       prisma.user.findMany({
         where,
         include: {
-          // @ts-expect-error Prisma relation may not be strictly typed yet in IDE
           participantFlags: params.contestSlug ? {
             where: { contest: { slug: params.contestSlug } },
             take: 1
@@ -63,7 +62,7 @@ export class ParticipantService {
                 }
               : {}),
           },
-        },
+        } as any,
         skip,
         take,
         orderBy: params.sortBy === "username"
@@ -132,12 +131,11 @@ export class ParticipantService {
       prisma.user.findUnique({ 
         where: { username },
         include: {
-          // @ts-expect-error Prisma relation may not be strictly typed yet in IDE
           participantFlags: contestSlug ? {
             where: { contest: { slug: contestSlug } },
             take: 1
           } : false
-        }
+        } as any
       }),
       contestSlug
         ? prisma.contest.findUnique({ where: { slug: contestSlug }, select: { id: true, name: true } })
