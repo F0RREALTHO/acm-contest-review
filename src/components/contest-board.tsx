@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useDebounce } from "@/hooks/use-debounce";
-import { Search } from "lucide-react";
+import { Trophy, Medal, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { SyncStatusBadge } from "@/components/shared/sync-status-badge";
 
@@ -23,9 +23,9 @@ export function ContestBoard({ slug }: { slug: string }) {
   }
 
   function formatRank(rank: number) {
-    if (rank === 1) return { label: "1st", icon: "🥇", color: "text-amber-400" };
-    if (rank === 2) return { label: "2nd", icon: "🥈", color: "text-slate-300" };
-    if (rank === 3) return { label: "3rd", icon: "🥉", color: "text-amber-600" };
+    if (rank === 1) return { label: "1st", icon: <Trophy className="h-3.5 w-3.5" />, color: "text-amber-400" };
+    if (rank === 2) return { label: "2nd", icon: <Medal className="h-3.5 w-3.5" />, color: "text-slate-300" };
+    if (rank === 3) return { label: "3rd", icon: <Medal className="h-3.5 w-3.5" />, color: "text-amber-600" };
     return { label: `#${rank}`, icon: null, color: "text-foreground" };
   }
 
@@ -114,8 +114,8 @@ export function ContestBoard({ slug }: { slug: string }) {
 
                       {/* Official Rank */}
                       <td className="px-5 py-4">
-                        <span className={`font-bold text-sm drop-shadow-md ${rank.color}`}>
-                          {rank.icon && <span className="mr-1.5">{rank.icon}</span>}
+                        <span className={`font-bold text-sm drop-shadow-md flex items-center gap-1.5 ${rank.color}`}>
+                          {rank.icon}
                           {rank.label}
                         </span>
                       </td>

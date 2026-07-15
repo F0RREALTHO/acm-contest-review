@@ -69,7 +69,6 @@ export function Header() {
                   isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                {contest.icon && <span className="text-base">{contest.icon}</span>}
                 {contest.name}
                 {isActive && (
                   <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
@@ -79,26 +78,32 @@ export function Header() {
           })}
 
           {/* Static tabs */}
-          {staticLinks.map((link) => {
-            const isActive = pathname.startsWith(link.href);
-
-            return (
-              <Link
-                key={link.name}
-                href={link.href}
-                className={cn(
-                  "flex items-center gap-2 px-4 h-full text-sm font-medium transition-colors relative hover:bg-slate-800/50",
-                  isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <span className="text-base">{link.icon}</span>
-                {link.name}
-                {isActive && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-                )}
-              </Link>
-            );
-          })}
+          <Link
+            href="/flagged"
+            className={cn(
+              "flex items-center gap-2 px-4 h-full text-sm font-medium transition-colors relative hover:bg-slate-800/50",
+              pathname.startsWith("/flagged") ? "text-primary" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <Flag className="h-4 w-4" />
+            Flagged
+            {pathname.startsWith("/flagged") && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+            )}
+          </Link>
+          <Link
+            href="/settings"
+            className={cn(
+              "flex items-center gap-2 px-4 h-full text-sm font-medium transition-colors relative hover:bg-slate-800/50",
+              pathname.startsWith("/settings") ? "text-primary" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <Settings className="h-4 w-4" />
+            Settings
+            {pathname.startsWith("/settings") && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+            )}
+          </Link>
         </nav>
       </div>
     </header>
