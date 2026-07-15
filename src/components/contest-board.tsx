@@ -9,12 +9,7 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { SyncStatusBadge } from "@/components/shared/sync-status-badge";
 
-export default function ContestParticipantListPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-  const { slug } = use(params);
+export function ContestBoard({ slug }: { slug: string }) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
@@ -106,7 +101,7 @@ export default function ContestParticipantListPage({
                 return (
                   <tr
                     key={p.username}
-                    onClick={() => router.push(`/participants/${p.username}?contest=${slug}`)}
+                    onClick={() => router.push(`/participants/${p.username}`)}
                     className={`border-b border-border/30 last:border-0 hover:bg-white/[0.02] transition-colors cursor-pointer group ${
                       isFlagged ? "!bg-red-950/20 hover:!bg-red-900/30" : ""
                     }`}

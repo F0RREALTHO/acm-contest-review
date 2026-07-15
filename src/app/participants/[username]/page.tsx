@@ -3,7 +3,7 @@
 import { use } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "next/navigation";
+import { useContest } from "@/providers/contest-provider";
 import { ArrowLeft, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -13,8 +13,8 @@ export default function ParticipantDetailsPage({
   params: Promise<{ username: string }>;
 }) {
   const { username } = use(params);
-  const searchParams = useSearchParams();
-  const contest = searchParams.get("contest") || "";
+  const { activeContest } = useContest();
+  const contest = activeContest || "";
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ["participant", username, contest],
@@ -36,7 +36,7 @@ export default function ParticipantDetailsPage({
       <div className="flex items-center justify-between mb-6 border-b border-border pb-4">
         <div className="flex items-center gap-3">
           <Link 
-            href={`/contests/${contest}`} 
+            href="/" 
             className="text-muted-foreground hover:text-foreground flex items-center text-sm transition-colors"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
@@ -111,7 +111,7 @@ export default function ParticipantDetailsPage({
                       {problem.attempts.map((att: any) => (
                         <Link 
                           key={att.submissionId} 
-                          href={`/submissions/${att.submissionId}?participant=${username}&contest=${contest}`}
+                          href={`/submissions/${att.submissionId}?participant=${username}`}
                           className="flex justify-between max-w-[200px] font-mono text-muted-foreground hover:bg-muted hover:text-primary px-2 py-1 rounded transition-colors -ml-2"
                         >
                           <span className={att.status === "Accepted" ? "text-emerald-500" : ""}>
@@ -127,7 +127,7 @@ export default function ParticipantDetailsPage({
 
               <div className="shrink-0">
                 {problem.latestAccepted ? (
-                  <Link href={`/submissions/${problem.latestAccepted.submissionId}?participant=${username}&contest=${contest}`}>
+                  <Link href={`/submissions/${problem.latestAccepted.submissionId}?participant=${username}`}>
                     <Button variant="outline" size="sm" className="h-8 border-primary/50 text-primary hover:bg-primary/10 transition-colors">
                       View Code
                     </Button>

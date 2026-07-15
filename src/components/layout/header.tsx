@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useContest } from "@/providers/contest-provider";
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Flag, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -17,6 +19,8 @@ interface ContestTab {
 
 export function Header() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { activeContest, setActiveContest } = useContest();
 
   const { data: contests } = useQuery<ContestTab[]>({
     queryKey: ["contests-nav"],
@@ -28,6 +32,12 @@ export function Header() {
     },
     staleTime: 60_000, // cache for 1 minute
   });
+
+  useEffect(() => {
+    if (contests?.length && !activeContest && !localStorage.getItem("acm_active_contest")) {
+      setActiveContest(contests[0].slug);
+    }
+  }, [contests, activeContest, setActiveContest]);
 
   const staticLinks = [
     { name: "Flagged", href: "/flagged", icon: "🚩" },
@@ -45,16 +55,17 @@ export function Header() {
         <nav className="flex items-center h-full">
           {/* Dynamic contest tabs */}
           {contests?.map((contest) => {
-            const href = `/contests/${contest.slug}`;
-            const isActive = pathname.startsWith(href) || 
-              (contest.displayOrder === 1 && pathname === "/");
+            const isActive = activeContest === contest.slug && pathname === "/";
 
             return (
-              <Link
+              <button
                 key={contest.id}
-                href={href}
+                onClick={() => {
+                  setActiveContest(contest.slug);
+                  if (pathname !== "/") router.push("/");
+                }}
                 className={cn(
-                  "flex items-center gap-2 px-4 h-full text-sm font-medium transition-colors relative hover:bg-slate-800/50",
+                  "flex items-center gap-2 px-4 h-full text-sm font-medium transition-colors relative hover:bg-slate-800/50 cursor-pointer",
                   isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
                 )}
               >
@@ -63,7 +74,7 @@ export function Header() {
                 {isActive && (
                   <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
                 )}
-              </Link>
+              </button>
             );
           })}
 

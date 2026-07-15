@@ -5,6 +5,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSubmission } from "@/hooks/use-submissions";
+import { useContest } from "@/providers/contest-provider";
 import { useQuery } from "@tanstack/react-query";
 import { MONACO_LANGUAGE_MAP } from "@/lib/constants";
 import { ArrowLeft, ChevronLeft, ChevronRight, Flag, Loader2, CheckCircle2 } from "lucide-react";
@@ -36,7 +37,8 @@ export default function SubmissionViewerPage({
   const router = useRouter();
   const searchParams = useSearchParams();
   const participant = searchParams.get("participant");
-  const contest = searchParams.get("contest");
+  const { activeContest } = useContest();
+  const contest = activeContest || "";
 
   const { data: submission, isLoading, refetch } = useSubmission(id);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -106,7 +108,7 @@ export default function SubmissionViewerPage({
       });
       toast.success("Marked as reviewed");
       if (navigation.next) navigateTo(navigation.next);
-      else router.push(participant ? `/participants/${participant}?contest=${contest || ""}` : "/");
+      else router.push(participant ? `/participants/${participant}` : "/");
     } finally {
       setIsFlagging(false);
     }
@@ -137,7 +139,7 @@ export default function SubmissionViewerPage({
       });
       toast.success("Flagged for review");
       setShowFlagDialog(false);
-      router.push(participant ? `/participants/${participant}?contest=${contest || ""}` : "/");
+      router.push(participant ? `/participants/${participant}` : "/");
     } catch (e) {
       toast.error("Failed to flag submission");
     } finally {
@@ -148,7 +150,6 @@ export default function SubmissionViewerPage({
   const navigateTo = (newId: string) => {
     let url = `/submissions/${newId}`;
     if (participant) url += `?participant=${participant}`;
-    if (contest) url += `&contest=${contest}`;
     router.push(url);
   };
 
@@ -162,7 +163,7 @@ export default function SubmissionViewerPage({
       {/* Top Bar */}
       <div className="flex flex-wrap items-center justify-between px-4 py-1.5 border-b border-border bg-card shrink-0 gap-2">
         <div className="flex items-center gap-3 text-sm">
-          <Link href={participant ? `/participants/${participant}?contest=${contest || ""}` : "/"} className="text-muted-foreground hover:text-foreground flex items-center p-1 hover:bg-slate-800/50 rounded transition-colors">
+          <Link href={participant ? `/participants/${participant}` : "/"} className="text-muted-foreground hover:text-foreground flex items-center p-1 hover:bg-slate-800/50 rounded transition-colors">
             <ArrowLeft className="h-4 w-4" />
           </Link>
           <div className="h-4 w-px bg-border" />
