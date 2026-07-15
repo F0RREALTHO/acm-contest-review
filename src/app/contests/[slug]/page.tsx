@@ -27,6 +27,13 @@ export default function ContestParticipantListPage({
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   }
 
+  function formatRank(rank: number) {
+    if (rank === 1) return { label: "1st", icon: "🥇", color: "text-amber-400" };
+    if (rank === 2) return { label: "2nd", icon: "🥈", color: "text-slate-300" };
+    if (rank === 3) return { label: "3rd", icon: "🥉", color: "text-amber-600" };
+    return { label: `#${rank}`, icon: null, color: "text-foreground" };
+  }
+
   // Fetch contest metadata dynamically
   const { data: contests } = useQuery({
     queryKey: ["contests-nav"],
@@ -54,7 +61,7 @@ export default function ContestParticipantListPage({
   });
 
   return (
-    <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6">
+    <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
         <div className="flex items-center gap-4">
           <h1 className="text-2xl font-bold text-foreground tracking-tight">
@@ -78,52 +85,90 @@ export default function ContestParticipantListPage({
       ) : !data?.data?.length ? (
         <div className="text-muted-foreground">No rankings available.</div>
       ) : (
-        <div className="border border-border rounded-md bg-card overflow-hidden shadow-sm">
-          <table className="w-full text-left text-sm text-muted-foreground">
-            <thead className="bg-muted border-b border-border text-muted-foreground">
-              <tr>
-                <th className="px-4 py-3 font-medium w-16 text-center">HR Rank</th>
-                <th className="px-4 py-3 font-medium w-16 text-center">Rank</th>
-                <th className="px-4 py-3 font-medium">Hacker</th>
-                <th className="px-4 py-3 font-medium text-right">Score</th>
-                <th className="px-4 py-3 font-medium text-right">Time</th>
-                <th className="px-4 py-3 font-medium text-center">Solved</th>
-                <th className="px-4 py-3 font-medium text-right w-24">Status</th>
+        <div className="border border-border rounded-lg bg-card overflow-hidden shadow-sm">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-border bg-muted/50">
+                <th className="px-5 py-3.5 font-semibold text-xs uppercase tracking-wider text-muted-foreground w-24">HR Rank</th>
+                <th className="px-5 py-3.5 font-semibold text-xs uppercase tracking-wider text-muted-foreground w-36">Official Rank ↑</th>
+                <th className="px-5 py-3.5 font-semibold text-xs uppercase tracking-wider text-muted-foreground">Hacker</th>
+                <th className="px-5 py-3.5 font-semibold text-xs uppercase tracking-wider text-muted-foreground text-right">Score</th>
+                <th className="px-5 py-3.5 font-semibold text-xs uppercase tracking-wider text-muted-foreground text-right">Time</th>
+                <th className="px-5 py-3.5 font-semibold text-xs uppercase tracking-wider text-muted-foreground text-center">Solved</th>
+                <th className="px-5 py-3.5 font-semibold text-xs uppercase tracking-wider text-muted-foreground text-right w-24">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-800">
+            <tbody>
               {data.data.map((p: any, index: number) => {
                 const isFlagged = p.status === "FLAGGED";
-                const rankDisplay = p.officialRank === 1 ? "🥇" : p.officialRank === 2 ? "🥈" : p.officialRank === 3 ? "🥉" : p.officialRank;
-                
+                const rank = formatRank(p.officialRank);
+
                 return (
-                  <tr 
-                    key={p.username} 
+                  <tr
+                    key={p.username}
                     onClick={() => router.push(`/participants/${p.username}?contest=${slug}`)}
-                    className={`h-12 hover:bg-slate-800/30 transition-colors cursor-pointer group border-b border-border/50 last:border-0 ${
-                      index % 2 === 0 ? "bg-transparent" : "bg-black/10"
-                    } ${isFlagged ? "!bg-red-950/30 hover:!bg-red-900/40" : ""}`}
+                    className={`border-b border-border/40 last:border-0 hover:bg-slate-800/40 transition-colors cursor-pointer group ${
+                      isFlagged ? "!bg-red-950/20 hover:!bg-red-900/30" : ""
+                    }`}
                   >
-                    <td className="px-4 py-2 font-mono text-xs text-muted-foreground text-center">{p.hrRank ?? "-"}</td>
-                    <td className="px-4 py-2 font-mono text-sm text-foreground text-center whitespace-nowrap">{rankDisplay}</td>
-                    <td className="px-4 py-2">
-                      <span className="text-foreground font-medium group-hover:text-primary transition-colors flex items-center gap-2">
-                        {p.avatar && <img src={p.avatar} alt="avatar" className="w-5 h-5 rounded-full ring-1 ring-border" />}
-                        {p.username}
+                    {/* HR Rank */}
+                    <td className="px-5 py-4 font-mono text-sm text-muted-foreground">
+                      #{p.hrRank ?? "-"}
+                    </td>
+
+                    {/* Official Rank */}
+                    <td className="px-5 py-4">
+                      <span className={`font-bold text-sm ${rank.color}`}>
+                        {rank.icon && <span className="mr-1.5">{rank.icon}</span>}
+                        {rank.label}
                       </span>
                     </td>
-                    <td className="px-4 py-2 font-mono text-sm text-right text-foreground">{p.score}</td>
-                    <td className="px-4 py-2 font-mono text-sm text-right text-muted-foreground">{formatTime(p.timeTaken)}</td>
-                    <td className="px-4 py-2 font-mono text-sm text-center">
-                      <span className="text-foreground">{p.problemsSolved}</span> <span className="text-muted-foreground">/ {data.contestTotalProblems || "?"}</span>
+
+                    {/* Hacker */}
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        {p.avatar ? (
+                          <img src={p.avatar} alt="" className="w-8 h-8 rounded-full ring-1 ring-border object-cover" />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-slate-700 ring-1 ring-border flex items-center justify-center text-xs font-medium text-slate-300">
+                            {p.username?.charAt(0)?.toUpperCase() || "?"}
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <span className="text-foreground font-medium group-hover:text-primary transition-colors block truncate">
+                            {p.username}
+                          </span>
+                          {p.country && (
+                            <span className="text-xs text-muted-foreground truncate block">{p.country}</span>
+                          )}
+                        </div>
+                      </div>
                     </td>
-                    <td className="px-4 py-2 text-right">
+
+                    {/* Score */}
+                    <td className="px-5 py-4 font-mono text-sm text-right font-semibold text-emerald-400">
+                      {p.score}
+                    </td>
+
+                    {/* Time */}
+                    <td className="px-5 py-4 font-mono text-sm text-right text-muted-foreground">
+                      {formatTime(p.timeTaken)}
+                    </td>
+
+                    {/* Solved */}
+                    <td className="px-5 py-4 font-mono text-sm text-center">
+                      <span className="text-foreground">{p.problemsSolved}</span>
+                      <span className="text-muted-foreground"> / {data.contestTotalProblems || "?"}</span>
+                    </td>
+
+                    {/* Status */}
+                    <td className="px-5 py-4 text-right">
                       {isFlagged ? (
-                        <span className="inline-flex items-center rounded bg-destructive/10 px-1.5 py-0.5 text-[10px] font-medium text-destructive border border-destructive/20 uppercase tracking-wider">
+                        <span className="inline-flex items-center rounded-md bg-destructive/10 px-2 py-1 text-[10px] font-semibold text-destructive border border-destructive/20 uppercase tracking-wider">
                           Flagged
                         </span>
                       ) : (
-                        <span className="inline-flex items-center rounded bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-500 border border-emerald-500/20 uppercase tracking-wider">
+                        <span className="inline-flex items-center rounded-md bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold text-emerald-500 border border-emerald-500/20 uppercase tracking-wider">
                           Clean
                         </span>
                       )}
@@ -138,3 +183,4 @@ export default function ContestParticipantListPage({
     </div>
   );
 }
+
