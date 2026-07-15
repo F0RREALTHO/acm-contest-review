@@ -80,99 +80,101 @@ export function ContestBoard({ slug }: { slug: string }) {
       ) : !data?.data?.length ? (
         <div className="text-muted-foreground">No rankings available.</div>
       ) : (
-        <div className="border border-border rounded-lg bg-card overflow-hidden shadow-sm">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-border/50">
-                <th className="px-5 py-4 font-bold text-[10px] uppercase tracking-[0.15em] text-muted-foreground w-24">HR Rank</th>
-                <th className="px-5 py-4 font-bold text-[10px] uppercase tracking-[0.15em] text-muted-foreground w-36">Official Rank ↑</th>
-                <th className="px-5 py-4 font-bold text-[10px] uppercase tracking-[0.15em] text-muted-foreground">Hacker</th>
-                <th className="px-5 py-4 font-bold text-[10px] uppercase tracking-[0.15em] text-muted-foreground text-right">Score</th>
-                <th className="px-5 py-4 font-bold text-[10px] uppercase tracking-[0.15em] text-muted-foreground text-right">Time</th>
-                <th className="px-5 py-4 font-bold text-[10px] uppercase tracking-[0.15em] text-muted-foreground text-center">Solved</th>
-                <th className="px-5 py-4 font-bold text-[10px] uppercase tracking-[0.15em] text-muted-foreground text-right w-24">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.data.map((p: any, index: number) => {
-                const isFlagged = p.status === "FLAGGED";
-                const rank = formatRank(p.officialRank);
+        <div className="border border-border rounded-lg bg-card overflow-hidden shadow-sm flex flex-col">
+          <div className="overflow-x-auto flex-1">
+            <table className="w-full text-left text-sm min-w-[800px] whitespace-nowrap">
+              <thead>
+                <tr className="border-b border-border/50">
+                  <th className="px-5 py-4 font-bold text-[10px] uppercase tracking-[0.15em] text-muted-foreground w-24">HR Rank</th>
+                  <th className="px-5 py-4 font-bold text-[10px] uppercase tracking-[0.15em] text-muted-foreground w-36">Official Rank ↑</th>
+                  <th className="px-5 py-4 font-bold text-[10px] uppercase tracking-[0.15em] text-muted-foreground">Hacker</th>
+                  <th className="px-5 py-4 font-bold text-[10px] uppercase tracking-[0.15em] text-muted-foreground text-right">Score</th>
+                  <th className="px-5 py-4 font-bold text-[10px] uppercase tracking-[0.15em] text-muted-foreground text-right">Time</th>
+                  <th className="px-5 py-4 font-bold text-[10px] uppercase tracking-[0.15em] text-muted-foreground text-center">Solved</th>
+                  <th className="px-5 py-4 font-bold text-[10px] uppercase tracking-[0.15em] text-muted-foreground text-right w-24">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.data.map((p: any, index: number) => {
+                  const isFlagged = p.status === "FLAGGED";
+                  const rank = formatRank(p.officialRank);
 
-                return (
-                  <tr
-                    key={p.username}
-                    onClick={() => router.push(`/participants/${p.username}`)}
-                    className={`border-b border-border/30 last:border-0 hover:bg-white/[0.02] transition-colors cursor-pointer group ${
-                      isFlagged ? "!bg-red-950/20 hover:!bg-red-900/30" : ""
-                    }`}
-                  >
-                    {/* HR Rank */}
-                    <td className="px-5 py-4 font-mono text-sm text-muted-foreground">
-                      #{p.hrRank ?? "-"}
-                    </td>
+                  return (
+                    <tr
+                      key={p.username}
+                      onClick={() => router.push(`/participants/${p.username}`)}
+                      className={`border-b border-border/30 last:border-0 hover:bg-white/[0.02] transition-colors cursor-pointer group ${
+                        isFlagged ? "!bg-red-950/20 hover:!bg-red-900/30" : ""
+                      }`}
+                    >
+                      {/* HR Rank */}
+                      <td className="px-5 py-4 font-mono text-sm text-muted-foreground">
+                        #{p.hrRank ?? "-"}
+                      </td>
 
-                    {/* Official Rank */}
-                    <td className="px-5 py-4">
-                      <span className={`font-bold text-sm drop-shadow-md ${rank.color}`}>
-                        {rank.icon && <span className="mr-1.5">{rank.icon}</span>}
-                        {rank.label}
-                      </span>
-                    </td>
+                      {/* Official Rank */}
+                      <td className="px-5 py-4">
+                        <span className={`font-bold text-sm drop-shadow-md ${rank.color}`}>
+                          {rank.icon && <span className="mr-1.5">{rank.icon}</span>}
+                          {rank.label}
+                        </span>
+                      </td>
 
-                    {/* Hacker */}
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-3">
-                        {p.avatar ? (
-                          <img src={p.avatar} alt="" className="w-8 h-8 rounded-full ring-1 ring-border object-cover" />
-                        ) : (
-                          <div className="w-8 h-8 rounded-full bg-slate-700 ring-1 ring-border flex items-center justify-center text-xs font-medium text-slate-300">
-                            {p.username?.charAt(0)?.toUpperCase() || "?"}
-                          </div>
-                        )}
-                        <div className="min-w-0">
-                          <span className="text-foreground font-medium group-hover:text-primary transition-colors block truncate">
-                            {p.username}
-                          </span>
-                          {p.country && (
-                            <span className="text-xs text-muted-foreground truncate block">{p.country}</span>
+                      {/* Hacker */}
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          {p.avatar ? (
+                            <img src={p.avatar} alt="" className="w-8 h-8 rounded-full ring-1 ring-border object-cover" />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-slate-700 ring-1 ring-border flex items-center justify-center text-xs font-medium text-slate-300">
+                              {p.username?.charAt(0)?.toUpperCase() || "?"}
+                            </div>
                           )}
+                          <div className="min-w-0 flex-1 overflow-hidden">
+                            <span className="text-foreground font-medium group-hover:text-primary transition-colors block truncate">
+                              {p.username}
+                            </span>
+                            {p.country && (
+                              <span className="text-xs text-muted-foreground truncate block">{p.country}</span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* Score */}
-                    <td className="px-5 py-4 font-mono text-base text-right font-bold text-emerald-400 drop-shadow-[0_0_12px_rgba(52,211,153,0.8)]">
-                      {p.score}
-                    </td>
+                      {/* Score */}
+                      <td className="px-5 py-4 font-mono text-base text-right font-bold text-emerald-400 drop-shadow-[0_0_12px_rgba(52,211,153,0.8)]">
+                        {p.score}
+                      </td>
 
-                    {/* Time */}
-                    <td className="px-5 py-4 font-mono text-sm text-right text-muted-foreground">
-                      {formatTime(p.timeTaken)}
-                    </td>
+                      {/* Time */}
+                      <td className="px-5 py-4 font-mono text-sm text-right text-muted-foreground">
+                        {formatTime(p.timeTaken)}
+                      </td>
 
-                    {/* Solved */}
-                    <td className="px-5 py-4 font-mono text-sm text-center">
-                      <span className="text-foreground">{p.problemsSolved}</span>
-                      <span className="text-muted-foreground"> / {data.contestTotalProblems || "?"}</span>
-                    </td>
+                      {/* Solved */}
+                      <td className="px-5 py-4 font-mono text-sm text-center">
+                        <span className="text-foreground">{p.problemsSolved}</span>
+                        <span className="text-muted-foreground"> / {data.contestTotalProblems || "?"}</span>
+                      </td>
 
-                    {/* Status */}
-                    <td className="px-5 py-4 text-right">
-                      {isFlagged ? (
-                        <span className="inline-flex items-center rounded-md bg-destructive/10 px-2 py-1 text-[10px] font-bold text-destructive border border-destructive/20 uppercase tracking-wider drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]">
-                          Flagged
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center rounded-md bg-emerald-500/10 px-2 py-1 text-[10px] font-bold text-emerald-500 border border-emerald-500/20 uppercase tracking-wider drop-shadow-[0_0_8px_rgba(16,185,129,0.3)]">
-                          Clean
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      {/* Status */}
+                      <td className="px-5 py-4 text-right">
+                        {isFlagged ? (
+                          <span className="inline-flex items-center rounded-md bg-destructive/10 px-2 py-1 text-[10px] font-bold text-destructive border border-destructive/20 uppercase tracking-wider drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]">
+                            Flagged
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center rounded-md bg-emerald-500/10 px-2 py-1 text-[10px] font-bold text-emerald-500 border border-emerald-500/20 uppercase tracking-wider drop-shadow-[0_0_8px_rgba(16,185,129,0.3)]">
+                            Clean
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
