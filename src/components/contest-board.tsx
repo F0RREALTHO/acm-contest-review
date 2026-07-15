@@ -163,7 +163,7 @@ export function ContestBoard({ slug }: { slug: string }) {
                     <tr
                     key={p.username}
                     onClick={() => router.push(`/participants/${p.username}`)}
-                    className={`h-14 border-b border-border/30 last:border-0 hover:bg-accent transition-colors cursor-pointer group ${isParticipantFlagged ? 'bg-destructive/10 hover:bg-destructive/20' : ''}`}
+                    className={`h-14 border-b border-border/30 last:border-0 transition-colors cursor-pointer group ${isParticipantFlagged ? 'bg-[rgba(220,38,38,0.08)] hover:bg-[rgba(220,38,38,0.12)] border-l-4 border-l-[#DC2626]' : 'hover:bg-accent'}`}
                   >
                       {/* HR Rank */}
                       <td className="px-5 py-4 font-mono text-sm text-muted-foreground">
@@ -181,15 +181,22 @@ export function ContestBoard({ slug }: { slug: string }) {
                       {/* Hacker */}
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
-                          {p.avatar ? (
-                            <img src={p.avatar} alt="" className="w-8 h-8 rounded-full ring-1 ring-border object-cover" />
-                          ) : (
-                            <div className="w-8 h-8 rounded-full bg-slate-700 ring-1 ring-border flex items-center justify-center text-xs font-medium text-slate-300">
-                              {p.username?.charAt(0)?.toUpperCase() || "?"}
-                            </div>
-                          )}
+                          <div className="relative">
+                            {p.avatar ? (
+                              <img src={p.avatar} alt="" className="w-8 h-8 rounded-full ring-1 ring-border object-cover" />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-slate-700 ring-1 ring-border flex items-center justify-center text-xs font-medium text-slate-300">
+                                {p.username?.charAt(0)?.toUpperCase() || "?"}
+                              </div>
+                            )}
+                            {isParticipantFlagged && (
+                              <div className="absolute -bottom-1 -right-1 bg-[#08111F] rounded-full p-0.5 ring-1 ring-border">
+                                <Flag className="h-3 w-3 text-[#EF4444] fill-[#EF4444]" />
+                              </div>
+                            )}
+                          </div>
                           <div className="min-w-0 flex-1 overflow-hidden">
-                            <span className={cn("font-medium group-hover:text-primary transition-colors block truncate", isParticipantFlagged ? "text-destructive" : "text-foreground")}>
+                            <span className={cn("group-hover:text-primary transition-colors block truncate", isParticipantFlagged ? "text-[#EF4444] font-semibold" : "text-foreground font-medium")}>
                               {p.username}
                             </span>
                             {p.country && (
@@ -200,7 +207,12 @@ export function ContestBoard({ slug }: { slug: string }) {
                       </td>
 
                       {/* Score */}
-                      <td className="px-5 py-2 font-mono text-[14px] text-right font-bold text-emerald-400 drop-shadow-[0_0_12px_rgba(52,211,153,0.8)]">
+                      <td className={cn(
+                        "px-5 py-2 font-mono text-[14px] text-right font-bold transition-colors",
+                        isParticipantFlagged 
+                          ? "text-red-400 drop-shadow-[0_0_12px_rgba(239,68,68,0.8)]"
+                          : "text-emerald-400 drop-shadow-[0_0_12px_rgba(52,211,153,0.8)]"
+                      )}>
                         {p.score}
                       </td>
 
@@ -218,7 +230,7 @@ export function ContestBoard({ slug }: { slug: string }) {
                       {/* Status */}
                       <td className="px-5 py-2 text-right">
                         {isParticipantFlagged ? (
-                          <span className="inline-flex items-center rounded-full bg-destructive/20 px-2.5 py-0.5 text-[11px] font-bold text-destructive uppercase tracking-wide">
+                          <span className="inline-flex items-center rounded-full bg-[rgba(220,38,38,0.12)] border border-[rgba(220,38,38,0.35)] px-2.5 py-0.5 text-[10px] font-bold text-[#F87171] uppercase tracking-wide">
                             🚩 FLAGGED
                           </span>
                         ) : isSubmissionFlagged ? (

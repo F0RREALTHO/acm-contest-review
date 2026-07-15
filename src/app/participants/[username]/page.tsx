@@ -63,8 +63,8 @@ export default function ParticipantDetailsPage({
   return (
     <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6">
       {isFlagged && (
-        <div className="mb-6 bg-destructive/10 border border-destructive/20 rounded-[14px] p-4 flex items-start gap-3">
-          <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+        <div className="mb-6 bg-[rgba(220,38,38,0.08)] border border-[rgba(220,38,38,0.3)] rounded-[14px] p-4 flex items-start gap-3">
+          <AlertTriangle className="h-5 w-5 text-[#EF4444] shrink-0 mt-0.5" />
           <div>
             <h3 className="text-destructive font-bold text-sm tracking-tight flex items-center gap-2">
               🚩 This participant has been flagged for review.

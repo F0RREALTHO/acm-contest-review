@@ -189,15 +189,15 @@ export default function FlaggedPage() {
             if (item.type === "participant") {
               const p = item as FlaggedParticipant & { type: string };
               return (
-                <div key={p.id} className="bg-card border border-border rounded-[18px] p-5 flex flex-col justify-between hover:border-border/80 transition-colors shadow-sm relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-16 h-16 bg-destructive/5 rounded-bl-[100px] pointer-events-none" />
+                <div key={p.id} className="bg-card border border-border border-l-4 border-l-[#DC2626] rounded-[18px] p-5 flex flex-col justify-between hover:border-border/80 transition-colors shadow-sm relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-16 h-16 bg-[#DC2626]/5 rounded-bl-[100px] pointer-events-none" />
                   
                   <div>
                     <div className="flex items-start justify-between mb-4 relative z-10">
                       <div>
-                        <h3 className="font-bold text-destructive text-lg mb-1 flex items-center gap-2">
+                        <h3 className="font-bold text-[#EF4444] text-lg mb-1 flex items-center gap-2">
                           <Flag className="h-4 w-4" />
-                          <Link href={`/participants/${p.username}`} className="hover:text-destructive/80 transition-colors">
+                          <Link href={`/participants/${p.username}`} className="hover:text-[#EF4444]/80 transition-colors">
                             {p.username}
                           </Link>
                         </h3>
@@ -205,7 +205,7 @@ export default function FlaggedPage() {
                           {p.contest.name}
                         </div>
                       </div>
-                      <span className="bg-destructive/10 text-destructive px-2.5 py-1 rounded-[8px] text-[10px] font-bold uppercase tracking-wider">
+                      <span className="bg-[rgba(220,38,38,0.12)] border border-[rgba(220,38,38,0.35)] text-[#F87171] px-2.5 py-1 rounded-[8px] text-[10px] font-bold uppercase tracking-wider">
                         {p.reason || "Flagged"}
                       </span>
                     </div>
@@ -222,7 +222,7 @@ export default function FlaggedPage() {
                         </div>
                       )}
                       {p.notes && (
-                        <div className="col-span-2 mt-2 text-xs text-muted-foreground bg-destructive/5 p-3 rounded-lg border border-destructive/10 font-mono">
+                        <div className="col-span-2 mt-2 text-xs text-muted-foreground bg-[rgba(220,38,38,0.05)] p-3 rounded-lg border border-[rgba(220,38,38,0.1)] font-mono">
                           {p.notes}
                         </div>
                       )}
