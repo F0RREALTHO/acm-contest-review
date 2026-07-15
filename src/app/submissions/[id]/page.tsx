@@ -170,6 +170,11 @@ export default function SubmissionViewerPage({
           <span className="font-semibold text-foreground truncate max-w-[200px] sm:max-w-xs">{submission.problem?.name}</span>
           <span className="text-muted-foreground">/</span>
           <span className="text-muted-foreground truncate max-w-[150px]">{submission.user?.username}</span>
+          {profile?.participantFlag && (
+            <span className="text-[10px] bg-destructive/10 text-destructive px-1.5 py-0.5 rounded uppercase tracking-wider font-bold shrink-0 shadow-sm border border-destructive/20">
+              Participant Flagged
+            </span>
+          )}
           <div className="h-4 w-px bg-border hidden sm:block" />
           <span className={`text-xs font-semibold px-1.5 py-0.5 rounded uppercase tracking-wider hidden sm:inline-block ${
             submission.status === "Accepted" ? "bg-emerald-500/10 text-emerald-500" : 

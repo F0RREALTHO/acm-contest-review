@@ -42,11 +42,13 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-40 flex h-[72px] shrink-0 items-center border-b border-border bg-[#08111F]/90 backdrop-blur-lg px-4 sm:px-8 md:px-12">
-      <div className="flex flex-1 items-center gap-6 h-full">
-        <div className="flex items-center">
-          <img src="/acm-logo.svg" alt="ACM" className="h-8 w-8 mr-3" />
-          <span className="font-bold text-foreground text-base tracking-tight">ACM Review</span>
-          <div className="h-5 w-px bg-border mx-4 hidden sm:block" />
+      <div className="w-full max-w-[1500px] mx-auto flex items-center justify-between h-full">
+        <div className="flex items-center gap-4 shrink-0 pr-6">
+          <Link href="/">
+            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-blue-600 shadow-sm hover:opacity-90 transition-opacity">
+              <span className="font-bold text-white text-sm tracking-tighter">ACM</span>
+            </div>
+          </Link>
           <span className="text-sm font-medium text-muted-foreground hidden sm:block">Contest Review Dashboard</span>
         </div>
         

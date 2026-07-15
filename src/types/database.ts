@@ -15,6 +15,13 @@ export interface ParticipantWithStats {
   reviewedCount: number;
   flaggedCount: number;
   reviewedStatus: "reviewed" | "flagged" | "pending";
+  participantFlag?: {
+    id: string;
+    reason: string;
+    notes: string | null;
+    flaggedBy: string | null;
+    createdAt: Date;
+  } | null;
 }
 
 export interface ProblemWithStats {
@@ -97,6 +104,13 @@ export interface ParticipantProfile {
   weeks: ParticipantWeek[];
   stats: ParticipantStats;
   leaderboard?: any;
+  participantFlag?: {
+    id: string;
+    reason: string;
+    notes: string | null;
+    flaggedBy: string | null;
+    createdAt: Date;
+  } | null;
 }
 
 export interface ParticipantWeek {

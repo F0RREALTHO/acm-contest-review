@@ -39,6 +39,11 @@ export class ParticipantService {
       prisma.user.findMany({
         where,
         include: {
+          // @ts-expect-error Prisma relation may not be strictly typed yet in IDE
+          participantFlags: params.contestSlug ? {
+            where: { contest: { slug: params.contestSlug } },
+            take: 1
+          } : false,
           submissions: {
             select: {
               status: true,
@@ -69,24 +74,24 @@ export class ParticipantService {
       params.contestSlug ? prisma.contest.findUnique({ where: { slug: params.contestSlug }, select: { totalProblems: true } }) : Promise.resolve(null)
     ]);
 
-    const data: ParticipantWithStats[] = users.map((user) => {
-      const submissions = user.submissions;
+    const data: ParticipantWithStats[] = users.map((u: any) => {
+      const submissions = u.submissions || [];
       const solvedProblems = new Set(
-        submissions.filter((s) => s.status === "Accepted").map((s) => s.problemId)
+        submissions.filter((s: any) => s.status === "Accepted").map((s: any) => s.problemId)
       );
 
       return {
-        id: user.id,
-        username: user.username,
-        team: user.team,
+        id: u.id,
+        username: u.username,
+        team: u.team,
         totalAttempts: submissions.length,
-        acceptedCount: submissions.filter((s) => s.status === "Accepted").length,
-        wrongAnswerCount: submissions.filter((s) => s.status === "Wrong Answer").length,
-        tleCount: submissions.filter((s) => s.status === "Time Limit Exceeded").length,
-        runtimeErrorCount: submissions.filter((s) => s.status === "Runtime Error").length,
-        compilationErrorCount: submissions.filter((s) => s.status === "Compilation Error").length,
+        acceptedCount: submissions.filter((s: any) => s.status === "Accepted").length,
+        wrongAnswerCount: submissions.filter((s: any) => s.status === "Wrong Answer").length,
+        tleCount: submissions.filter((s: any) => s.status === "Time Limit Exceeded").length,
+        runtimeErrorCount: submissions.filter((s: any) => s.status === "Runtime Error").length,
+        compilationErrorCount: submissions.filter((s: any) => s.status === "Compilation Error").length,
         latestActivity: submissions.length > 0
-          ? submissions.reduce((latest, s) =>
+          ? submissions.reduce((latest: any, s: any) =>
               s.createdAt > latest ? s.createdAt : latest,
               submissions[0].createdAt
             )
@@ -97,6 +102,7 @@ export class ParticipantService {
           (submissions.filter((s: any) => s.isLatestAccepted).length > 0 && 
            submissions.filter((s: any) => s.isLatestAccepted).every((s: any) => s.review?.reviewed) ? "reviewed" : "pending"),
         problemsSolved: solvedProblems.size,
+        participantFlag: (u as any).participantFlags?.[0] || null,
       };
     });
 
@@ -123,7 +129,16 @@ export class ParticipantService {
     const contestFilter = contestSlug ? { contest: { slug: contestSlug } } : {};
 
     const [user, contest] = await Promise.all([
-      prisma.user.findUnique({ where: { username } }),
+      prisma.user.findUnique({ 
+        where: { username },
+        include: {
+          // @ts-expect-error Prisma relation may not be strictly typed yet in IDE
+          participantFlags: contestSlug ? {
+            where: { contest: { slug: contestSlug } },
+            take: 1
+          } : false
+        }
+      }),
       contestSlug
         ? prisma.contest.findUnique({ where: { slug: contestSlug }, select: { id: true, name: true } })
         : Promise.resolve(null),
@@ -136,7 +151,7 @@ export class ParticipantService {
         })
       : null;
 
-    let resolvedUser = user;
+    let resolvedUser: any = user;
     if (!resolvedUser && leaderboardEntry) {
       resolvedUser = await prisma.user.create({ data: { username } });
     }
@@ -272,6 +287,7 @@ export class ParticipantService {
         score: leaderboardEntry.score,
         timeTaken: leaderboardEntry.timeTaken
       } : null,
+      participantFlag: (resolvedUser as any).participantFlags?.[0] || null,
     };
   }
 

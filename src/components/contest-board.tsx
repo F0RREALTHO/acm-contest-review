@@ -9,10 +9,20 @@ import { Trophy, Medal, Search, RefreshCw, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { SyncStatusBadge } from "@/components/shared/sync-status-badge";
+import { FlagParticipantModal } from "@/components/shared/flag-participant-modal";
+import { Button } from "@/components/ui/button";
+import { MoreHorizontal, Flag } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function ContestBoard({ slug }: { slug: string }) {
   const router = useRouter();
   const [search, setSearch] = useState("");
+  const [flagModalUser, setFlagModalUser] = useState<string | null>(null);
   const debouncedSearch = useDebounce(search, 300);
 
   function formatTime(seconds: number) {
@@ -55,6 +65,12 @@ export function ContestBoard({ slug }: { slug: string }) {
       return res.json();
     },
   });
+
+  const refetchLeaderboard = () => {
+    setFlagModalUser(null);
+    // Force a hard reload for simplicity, or we can rely on tanstack refetch
+    window.location.reload();
+  };
 
   return (
     <div className="w-full">
@@ -134,18 +150,20 @@ export function ContestBoard({ slug }: { slug: string }) {
                   <th className="px-5 py-4 font-bold text-[10px] uppercase tracking-[0.15em] text-muted-foreground text-right">Time</th>
                   <th className="px-5 py-4 font-bold text-[10px] uppercase tracking-[0.15em] text-muted-foreground text-center">Solved</th>
                   <th className="px-5 py-4 font-bold text-[10px] uppercase tracking-[0.15em] text-muted-foreground text-right w-24">Status</th>
+                  <th className="px-5 py-4 w-12"></th>
                 </tr>
               </thead>
               <tbody>
                 {data.data.map((p: any, index: number) => {
-                  const isFlagged = p.status === "FLAGGED";
+                  const isSubmissionFlagged = p.status === "FLAGGED";
+                  const isParticipantFlagged = !!p.participantFlag;
                   const rank = formatRank(p.officialRank);
 
                   return (
                     <tr
                     key={p.username}
                     onClick={() => router.push(`/participants/${p.username}`)}
-                    className={`h-14 border-b border-border/30 last:border-0 hover:bg-accent transition-colors cursor-pointer group`}
+                    className={`h-14 border-b border-border/30 last:border-0 hover:bg-accent transition-colors cursor-pointer group ${isParticipantFlagged ? 'bg-destructive/10 hover:bg-destructive/20' : ''}`}
                   >
                       {/* HR Rank */}
                       <td className="px-5 py-4 font-mono text-sm text-muted-foreground">
@@ -171,7 +189,7 @@ export function ContestBoard({ slug }: { slug: string }) {
                             </div>
                           )}
                           <div className="min-w-0 flex-1 overflow-hidden">
-                            <span className="text-foreground font-medium group-hover:text-primary transition-colors block truncate">
+                            <span className={cn("font-medium group-hover:text-primary transition-colors block truncate", isParticipantFlagged ? "text-destructive" : "text-foreground")}>
                               {p.username}
                             </span>
                             {p.country && (
@@ -199,7 +217,11 @@ export function ContestBoard({ slug }: { slug: string }) {
 
                       {/* Status */}
                       <td className="px-5 py-2 text-right">
-                        {isFlagged ? (
+                        {isParticipantFlagged ? (
+                          <span className="inline-flex items-center rounded-full bg-destructive/20 px-2.5 py-0.5 text-[11px] font-bold text-destructive uppercase tracking-wide">
+                            🚩 FLAGGED
+                          </span>
+                        ) : isSubmissionFlagged ? (
                           <span className="inline-flex items-center rounded-full bg-warning/10 px-2.5 py-0.5 text-[11px] font-bold text-warning uppercase tracking-wide">
                             Flagged
                           </span>
@@ -209,6 +231,24 @@ export function ContestBoard({ slug }: { slug: string }) {
                           </span>
                         )}
                       </td>
+
+                      {/* Actions */}
+                      <td className="px-5 py-2 text-right opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger className="h-8 w-8 p-0 flex items-center justify-center rounded-full hover:bg-background outline-none focus:ring-0">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-[160px] rounded-xl border-border bg-card">
+                            <DropdownMenuItem 
+                              className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer font-medium text-xs flex items-center gap-2"
+                              onClick={() => setFlagModalUser(p.username)}
+                            >
+                              <Flag className="h-3.5 w-3.5" />
+                              Flag User
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </td>
                     </tr>
                   );
                 })}
@@ -216,6 +256,16 @@ export function ContestBoard({ slug }: { slug: string }) {
             </table>
           </div>
         </div>
+      )}
+
+      {flagModalUser && (
+        <FlagParticipantModal
+          isOpen={true}
+          onClose={() => setFlagModalUser(null)}
+          username={flagModalUser}
+          contestSlug={slug}
+          onSuccess={refetchLeaderboard}
+        />
       )}
     </div>
   );

@@ -1,11 +1,12 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useContest } from "@/providers/contest-provider";
-import { ArrowLeft, ChevronDown } from "lucide-react";
+import { ArrowLeft, ChevronDown, Flag, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { FlagParticipantModal } from "@/components/shared/flag-participant-modal";
 
 export default function ParticipantDetailsPage({
   params,
@@ -15,8 +16,9 @@ export default function ParticipantDetailsPage({
   const { username } = use(params);
   const { activeContest } = useContest();
   const contest = activeContest || "";
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const { data: profile, isLoading } = useQuery({
+  const { data: profile, isLoading, refetch } = useQuery({
     queryKey: ["participant", username, contest],
     queryFn: async () => {
       const res = await fetch(`/api/participants/${username}?contest=${contest}`);
@@ -45,10 +47,35 @@ export default function ParticipantDetailsPage({
   );
   if (!profile) return <div className="max-w-4xl mx-auto py-12 text-zinc-500">Participant not found.</div>;
 
+  const handleUnflag = async () => {
+    try {
+      await fetch(`/api/participant-flags?username=${username}&contestSlug=${contest}`, { method: "DELETE" });
+      refetch();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const isFlagged = !!profile.participantFlag;
+
   const allProblems = profile.weeks.flatMap((w: any) => w.problems);
 
   return (
     <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6">
+      {isFlagged && (
+        <div className="mb-6 bg-destructive/10 border border-destructive/20 rounded-[14px] p-4 flex items-start gap-3">
+          <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+          <div>
+            <h3 className="text-destructive font-bold text-sm tracking-tight flex items-center gap-2">
+              🚩 This participant has been flagged for review.
+            </h3>
+            <p className="text-sm text-destructive/80 mt-1">
+              Reason: <span className="font-semibold text-destructive">{profile.participantFlag.reason}</span>
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-6 border-b border-border pb-6 pt-2">
         <div className="flex items-center gap-4">
           <Link 
@@ -68,8 +95,8 @@ export default function ParticipantDetailsPage({
             <div>
               <h1 className="text-2xl font-bold text-foreground tracking-tight flex items-center gap-2">
                 {username}
-                {profile.status === "FLAGGED" && (
-                  <span className="text-[10px] bg-warning/10 text-warning px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">Flagged</span>
+                {isFlagged && (
+                  <span className="text-[10px] bg-destructive/10 text-destructive px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">🚩 Flagged</span>
                 )}
               </h1>
               <div className="text-sm text-muted-foreground mt-0.5">
@@ -103,6 +130,18 @@ export default function ParticipantDetailsPage({
             <span className="font-semibold text-foreground text-lg">
               {profile.stats.totalAccepted} <span className="text-muted-foreground text-sm font-normal">/ {allProblems.length}</span>
             </span>
+          </div>
+          <div className="h-10 w-px bg-border hidden md:block" />
+          <div className="flex items-center ml-2">
+            {isFlagged ? (
+              <Button onClick={handleUnflag} variant="outline" className="rounded-xl border-border hover:bg-destructive/10 hover:text-destructive h-9 text-xs font-semibold uppercase tracking-wider">
+                Unflag User
+              </Button>
+            ) : (
+              <Button onClick={() => setIsModalOpen(true)} variant="outline" className="rounded-xl border-destructive/30 text-destructive hover:bg-destructive hover:text-destructive-foreground h-9 text-xs font-semibold uppercase tracking-wider flex items-center gap-2">
+                <Flag className="h-3.5 w-3.5" /> Flag User
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -173,6 +212,14 @@ export default function ParticipantDetailsPage({
           })}
         </div>
       </div>
+
+      <FlagParticipantModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        username={username}
+        contestSlug={contest}
+        onSuccess={refetch}
+      />
     </div>
   );
 }
