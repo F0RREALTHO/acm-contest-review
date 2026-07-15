@@ -39,17 +39,15 @@ export function Header() {
     }
   }, [contests, activeContest, setActiveContest]);
 
-  const staticLinks = [
-    { name: "Flagged", href: "/flagged", icon: "🚩" },
-    { name: "Settings", href: "/settings", icon: "⚙️" },
-  ];
 
   return (
-    <header className="sticky top-0 z-40 flex h-12 shrink-0 items-center border-b border-border bg-background px-6 md:px-10 lg:px-12">
+    <header className="sticky top-0 z-40 flex h-[72px] shrink-0 items-center border-b border-border bg-[#08111F]/90 backdrop-blur-lg px-4 sm:px-8 md:px-12">
       <div className="flex flex-1 items-center gap-6 h-full">
-        <div className="flex items-center gap-2 mr-4">
-          <img src="/acm-logo.svg" alt="ACM" className="h-7 w-7" />
-          <span className="font-bold text-foreground text-sm">ACM Review</span>
+        <div className="flex items-center">
+          <img src="/acm-logo.svg" alt="ACM" className="h-8 w-8 mr-3" />
+          <span className="font-bold text-foreground text-base tracking-tight">ACM Review</span>
+          <div className="h-5 w-px bg-border mx-4 hidden sm:block" />
+          <span className="text-sm font-medium text-muted-foreground hidden sm:block">Contest Review Dashboard</span>
         </div>
         
         <nav className="flex items-center h-full">
@@ -65,7 +63,7 @@ export function Header() {
                   if (pathname !== "/") router.push("/");
                 }}
                 className={cn(
-                  "flex items-center gap-2 px-4 h-full text-sm font-medium transition-colors relative hover:bg-slate-800/50 cursor-pointer",
+                  "flex items-center gap-2 px-4 h-full text-sm font-medium transition-colors relative cursor-pointer",
                   isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
                 )}
               >
@@ -81,7 +79,7 @@ export function Header() {
           <Link
             href="/flagged"
             className={cn(
-              "flex items-center gap-2 px-4 h-full text-sm font-medium transition-colors relative hover:bg-slate-800/50",
+              "flex items-center gap-2 px-4 h-full text-sm font-medium transition-colors relative",
               pathname.startsWith("/flagged") ? "text-primary" : "text-muted-foreground hover:text-foreground"
             )}
           >
@@ -94,7 +92,7 @@ export function Header() {
           <Link
             href="/settings"
             className={cn(
-              "flex items-center gap-2 px-4 h-full text-sm font-medium transition-colors relative hover:bg-slate-800/50",
+              "flex items-center gap-2 px-4 h-full text-sm font-medium transition-colors relative",
               pathname.startsWith("/settings") ? "text-primary" : "text-muted-foreground hover:text-foreground"
             )}
           >

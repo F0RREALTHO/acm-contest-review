@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useDebounce } from "@/hooks/use-debounce";
-import { Trophy, Medal, Search } from "lucide-react";
+import { Trophy, Medal, Search, RefreshCw, Download } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { SyncStatusBadge } from "@/components/shared/sync-status-badge";
 
@@ -23,10 +24,10 @@ export function ContestBoard({ slug }: { slug: string }) {
   }
 
   function formatRank(rank: number) {
-    if (rank === 1) return { label: "1st", icon: <Trophy className="h-3.5 w-3.5" />, color: "text-amber-400" };
-    if (rank === 2) return { label: "2nd", icon: <Medal className="h-3.5 w-3.5" />, color: "text-slate-300" };
-    if (rank === 3) return { label: "3rd", icon: <Medal className="h-3.5 w-3.5" />, color: "text-amber-600" };
-    return { label: `#${rank}`, icon: null, color: "text-foreground" };
+    if (rank === 1) return { label: "1st", icon: <Trophy className="h-4 w-4" />, color: "text-amber-400" };
+    if (rank === 2) return { label: "2nd", icon: <Medal className="h-4 w-4" />, color: "text-slate-300" };
+    if (rank === 3) return { label: "3rd", icon: <Medal className="h-4 w-4" />, color: "text-amber-600" };
+    return { label: `${rank}`, icon: null, color: "text-foreground" };
   }
 
   // Fetch contest metadata dynamically
@@ -56,27 +57,68 @@ export function ContestBoard({ slug }: { slug: string }) {
   });
 
   return (
-    <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
-        <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-extrabold text-white tracking-tight drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+    <div className="w-full">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4 border-b border-border pb-6 pt-2">
+        <div>
+          <h1 className="text-[28px] font-bold text-foreground tracking-tight mb-2 flex items-center gap-3">
             {contestTitle}
           </h1>
-          <SyncStatusBadge contestSlug={slug} />
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+            <span>Official ACM Coding Contest Review</span>
+            <span className="w-1 h-1 rounded-full bg-border" />
+            <span>{data?.data?.length || 0} Participants</span>
+            <span className="w-1 h-1 rounded-full bg-border" />
+            <span>Updated recently</span>
+          </div>
         </div>
-        <div className="relative w-full sm:w-64">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search hacker..."
-            className="pl-9 bg-card border-border text-sm focus:border-primary shadow-none"
-          />
+        
+        <div className="flex items-center gap-3">
+          <div className="relative w-full sm:w-[340px]">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search participant..."
+              className="pl-9 h-9 bg-card border-border text-sm focus:border-primary shadow-none rounded-[12px]"
+            />
+          </div>
+          <SyncStatusBadge contestSlug={slug} />
         </div>
       </div>
 
+      {!isLoading && data?.data && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {[
+            { label: "Participants", value: data.data.length },
+            { label: "Problems", value: data.contestTotalProblems || "-" },
+            { label: "Flagged", value: data.data.filter((p: any) => p.status === "FLAGGED").length, alert: true },
+            { label: "Last Sync", value: "Just now" },
+          ].map((stat, i) => (
+            <div key={i} className="bg-card border border-border rounded-[18px] p-5 hover:-translate-y-0.5 transition-transform duration-150">
+              <div className="text-sm text-muted-foreground mb-1 font-medium">{stat.label}</div>
+              <div className={cn("text-2xl font-bold", stat.alert && stat.value > 0 ? "text-warning" : "text-foreground")}>
+                {stat.value}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {isLoading ? (
-        <div className="text-muted-foreground">Loading leaderboard...</div>
+        <div className="border border-border rounded-[16px] bg-card overflow-hidden shadow-sm flex flex-col mt-8">
+          <div className="p-4 border-b border-border/50">
+            <div className="h-6 w-32 bg-accent rounded animate-pulse" />
+          </div>
+          {[1,2,3,4,5].map(i => (
+            <div key={i} className="h-14 border-b border-border/30 last:border-0 flex items-center px-5 gap-6">
+              <div className="h-4 w-12 bg-accent rounded animate-pulse" />
+              <div className="h-4 w-16 bg-accent rounded animate-pulse" />
+              <div className="h-8 w-8 bg-accent rounded-full animate-pulse" />
+              <div className="h-4 w-48 bg-accent rounded animate-pulse flex-1" />
+              <div className="h-4 w-16 bg-accent rounded animate-pulse" />
+            </div>
+          ))}
+        </div>
       ) : !data?.data?.length ? (
         <div className="text-muted-foreground">No rankings available.</div>
       ) : (
@@ -101,20 +143,18 @@ export function ContestBoard({ slug }: { slug: string }) {
 
                   return (
                     <tr
-                      key={p.username}
-                      onClick={() => router.push(`/participants/${p.username}`)}
-                      className={`border-b border-border/30 last:border-0 hover:bg-white/[0.02] transition-colors cursor-pointer group ${
-                        isFlagged ? "!bg-red-950/20 hover:!bg-red-900/30" : ""
-                      }`}
-                    >
+                    key={p.username}
+                    onClick={() => router.push(`/participants/${p.username}`)}
+                    className={`h-14 border-b border-border/30 last:border-0 hover:bg-accent transition-colors cursor-pointer group`}
+                  >
                       {/* HR Rank */}
                       <td className="px-5 py-4 font-mono text-sm text-muted-foreground">
                         #{p.hrRank ?? "-"}
                       </td>
 
                       {/* Official Rank */}
-                      <td className="px-5 py-4">
-                        <span className={`font-bold text-sm drop-shadow-md flex items-center gap-1.5 ${rank.color}`}>
+                      <td className="px-5 py-2">
+                        <span className={`font-semibold text-[13px] flex items-center gap-2 ${rank.color}`}>
                           {rank.icon}
                           {rank.label}
                         </span>
@@ -142,7 +182,7 @@ export function ContestBoard({ slug }: { slug: string }) {
                       </td>
 
                       {/* Score */}
-                      <td className="px-5 py-4 font-mono text-base text-right font-bold text-emerald-400 drop-shadow-[0_0_12px_rgba(52,211,153,0.8)]">
+                      <td className="px-5 py-2 font-mono text-[13px] text-right font-medium text-emerald-500">
                         {p.score}
                       </td>
 
@@ -158,13 +198,13 @@ export function ContestBoard({ slug }: { slug: string }) {
                       </td>
 
                       {/* Status */}
-                      <td className="px-5 py-4 text-right">
+                      <td className="px-5 py-2 text-right">
                         {isFlagged ? (
-                          <span className="inline-flex items-center rounded-md bg-destructive/10 px-2 py-1 text-[10px] font-bold text-destructive border border-destructive/20 uppercase tracking-wider drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]">
+                          <span className="inline-flex items-center rounded-full bg-warning/10 px-2.5 py-0.5 text-[11px] font-bold text-warning uppercase tracking-wide">
                             Flagged
                           </span>
                         ) : (
-                          <span className="inline-flex items-center rounded-md bg-emerald-500/10 px-2 py-1 text-[10px] font-bold text-emerald-500 border border-emerald-500/20 uppercase tracking-wider drop-shadow-[0_0_8px_rgba(16,185,129,0.3)]">
+                          <span className="inline-flex items-center rounded-full bg-success/10 px-2.5 py-0.5 text-[11px] font-bold text-success uppercase tracking-wide">
                             Clean
                           </span>
                         )}

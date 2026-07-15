@@ -1,8 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import Link from "next/link";
-import { Flag } from "lucide-react";
+import { Flag, CheckCircle2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface FlaggedSubmission {
   id: string;
@@ -40,72 +40,74 @@ export default function FlaggedPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6">
-      <div className="flex items-center gap-4 mb-6">
-        <h1 className="text-2xl font-bold text-foreground tracking-tight flex items-center gap-3">
-          <Flag className="h-6 w-6 text-destructive" /> Flagged Submissions
+    <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6">
+      <div className="flex items-center justify-between mb-8 border-b border-border pb-6 pt-2">
+        <h1 className="text-[28px] font-bold text-foreground tracking-tight flex items-center gap-3">
+          <Flag className="h-6 w-6 text-warning" /> Flagged Reviews
         </h1>
       </div>
 
       {isLoading ? (
-        <div className="text-muted-foreground">Loading flagged submissions...</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1,2,3,4,5,6].map(i => <div key={i} className="bg-card border border-border rounded-[18px] h-48 animate-pulse" />)}
+        </div>
       ) : !reviews?.data?.length ? (
-        <div className="text-muted-foreground">No flagged submissions.</div>
+        <div className="flex flex-col items-center justify-center py-24 text-center bg-card border border-border rounded-[24px]">
+          <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mb-4 shadow-[0_0_15px_rgba(24,195,126,0.15)]">
+            <CheckCircle2 className="h-8 w-8 text-success" />
+          </div>
+          <h2 className="text-xl font-bold text-foreground mb-2 tracking-tight">All Clear</h2>
+          <p className="text-muted-foreground max-w-sm">No flagged submissions at the moment. Everything looks clean and perfectly normal.</p>
+        </div>
       ) : (
-        <div className="border border-border rounded-md bg-card overflow-hidden shadow-sm">
-          <table className="w-full text-left text-sm text-muted-foreground">
-            <thead className="bg-muted border-b border-border text-muted-foreground">
-              <tr>
-                <th className="px-4 py-3 font-medium">Contest</th>
-                <th className="px-4 py-3 font-medium">Participant</th>
-                <th className="px-4 py-3 font-medium">Problem</th>
-                <th className="px-4 py-3 font-medium">Reason</th>
-                <th className="px-4 py-3 font-medium">Notes</th>
-                <th className="px-4 py-3 font-medium text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-800">
-              {reviews.data.map((review, index) => (
-                <tr 
-                  key={review.id} 
-                  className={`h-12 hover:bg-slate-800/30 transition-colors group border-b border-border/50 last:border-0 ${
-                    index % 2 === 0 ? "bg-transparent" : "bg-black/10"
-                  }`}
-                >
-                  <td className="px-4 py-2 font-mono text-xs text-muted-foreground">
-                    {review.submission.problem.contest?.name || "Unknown"}
-                  </td>
-                  <td className="px-4 py-2">
-                    <Link 
-                      href={`/participants/${review.submission.user.username}?contest=${review.submission.problem.contest?.slug}`}
-                      className="text-foreground font-medium hover:text-primary transition-colors"
-                    >
-                      {review.submission.user.username}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-2 text-foreground font-medium">{review.submission.problem.name}</td>
-                  <td className="px-4 py-2 text-destructive font-medium uppercase tracking-wider text-[11px]">{review.reason || "-"}</td>
-                  <td className="px-4 py-2 text-amber-500/80 max-w-xs truncate text-xs" title={review.notes || ""}>{review.notes || "-"}</td>
-                  <td className="px-4 py-2 text-right">
-                    <div className="flex items-center justify-end gap-4">
-                      <button 
-                        onClick={() => handleUnflag(review.submissionId)}
-                        className="text-xs text-muted-foreground hover:text-destructive font-medium transition-colors uppercase tracking-wider"
-                      >
-                        Unflag
-                      </button>
-                      <Link 
-                        href={`/submissions/${review.submissionId}?participant=${review.submission.user.username}&contest=${review.submission.problem.contest?.slug}`}
-                        className="text-xs text-primary hover:text-primary/80 font-medium transition-colors uppercase tracking-wider"
-                      >
-                        View Code
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {reviews.data.map((review) => (
+            <div key={review.id} className="bg-card border border-border rounded-[18px] p-5 flex flex-col justify-between hover:border-border/80 transition-colors">
+              <div>
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <h3 className="font-bold text-foreground text-lg mb-1">
+                      <Link href={`/participants/${review.submission.user.username}`} className="hover:text-primary transition-colors">
+                        {review.submission.user.username}
                       </Link>
+                    </h3>
+                    <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+                      <span className="font-medium">{review.submission.problem.contest?.name || "Unknown"}</span>
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </div>
+                  <span className="bg-warning/10 text-warning px-2.5 py-1 rounded-[8px] text-[10px] font-bold uppercase tracking-wider">
+                    {review.reason || "Flagged"}
+                  </span>
+                </div>
+                
+                <div className="mb-6">
+                  <div className="text-sm font-semibold text-foreground mb-1.5">{review.submission.problem.name}</div>
+                  {review.notes && (
+                    <div className="text-xs text-muted-foreground bg-accent/30 p-3 rounded-lg border border-border/50 font-mono">
+                      {review.notes}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 pt-4 border-t border-border">
+                <Button 
+                  onClick={() => handleUnflag(review.submissionId)}
+                  variant="outline" 
+                  className="flex-1 rounded-[12px] h-9 text-xs font-medium border-border hover:bg-success/10 hover:text-success hover:border-success/30 transition-colors"
+                >
+                  Mark Safe
+                </Button>
+                <Link href={`/submissions/${review.submissionId}?participant=${review.submission.user.username}`} className="flex-1">
+                  <Button 
+                    className="w-full rounded-[12px] h-9 text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90"
+                  >
+                    Review
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
