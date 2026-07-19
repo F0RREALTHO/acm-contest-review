@@ -82,6 +82,33 @@ export class LeaderboardService {
       };
     });
 
+    // Sort to push flagged participants to the bottom, otherwise keep existing order (which is by officialRank)
+    data.sort((a, b) => {
+      const aFlagged = a.status === "FLAGGED" || !!a.participantFlag;
+      const bFlagged = b.status === "FLAGGED" || !!b.participantFlag;
+      
+      if (aFlagged && !bFlagged) return 1;
+      if (!aFlagged && bFlagged) return -1;
+      return 0; // If both are flagged or both are clean, retain original relative order
+    });
+
+    // Recompute officialRank for unflagged users
+    let currentRank = 1;
+    for (const entry of data) {
+      const isFlagged = entry.status === "FLAGGED" || !!entry.participantFlag;
+      if (!isFlagged) {
+        entry.officialRank = currentRank++;
+      } else {
+        // We can either set it to null or keep it as their original hrRank/officialRank, but visually setting it to a generic value or max value might be better if we want them out of rank.
+        // Let's just null it out or set it to a very large number for UI purposes? 
+        // Actually the component just displays formatRank(p.officialRank), so let's set it to -1 to represent 'unranked' or we can just leave it.
+        // Let's set it to 0 so formatRank can handle it, or we just leave it as is if the UI already shows it as flagged.
+        // Wait, the prompt says "so clean users get sequential rank 1, 2, 3..". 
+        // We'll set flagged users' official rank to 0 to indicate they are unranked.
+        entry.officialRank = 0;
+      }
+    }
+
     return {
       data,
       contestTotalProblems: contest.totalProblems

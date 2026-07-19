@@ -34,6 +34,7 @@ export function ContestBoard({ slug }: { slug: string }) {
   }
 
   function formatRank(rank: number) {
+    if (rank === 0) return { label: "-", icon: null, color: "text-muted-foreground" };
     if (rank === 1) return { label: "1st", icon: <Trophy className="h-4 w-4" />, color: "text-amber-400" };
     if (rank === 2) return { label: "2nd", icon: <Medal className="h-4 w-4" />, color: "text-slate-300" };
     if (rank === 3) return { label: "3rd", icon: <Medal className="h-4 w-4" />, color: "text-amber-600" };
