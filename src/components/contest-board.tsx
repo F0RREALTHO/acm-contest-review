@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Trophy, Medal, Search, RefreshCw, Download } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatRelativeTime } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { SyncStatusBadge } from "@/components/shared/sync-status-badge";
 import { FlagParticipantModal } from "@/components/shared/flag-participant-modal";
@@ -109,7 +109,7 @@ export function ContestBoard({ slug }: { slug: string }) {
             { label: "Participants", value: data.data.length },
             { label: "Problems", value: data.contestTotalProblems || "-" },
             { label: "Flagged", value: data.data.filter((p: any) => p.status === "FLAGGED" || !!p.participantFlag).length, alert: true },
-            { label: "Last Sync", value: "Just now" },
+            { label: "Last Sync", value: data.contestLastSync ? formatRelativeTime(data.contestLastSync) : "Never" },
           ].map((stat, i) => (
             <div key={i} className="bg-card border border-border rounded-[18px] p-5 hover:-translate-y-0.5 transition-transform duration-150">
               <div className="text-sm text-muted-foreground mb-1 font-medium">{stat.label}</div>

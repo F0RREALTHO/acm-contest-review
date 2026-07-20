@@ -4,7 +4,7 @@ export class LeaderboardService {
   async getLeaderboard(params: { contestSlug: string; search?: string }) {
     const contest = await prisma.contest.findUnique({
       where: { slug: params.contestSlug },
-      select: { id: true, totalProblems: true }
+      select: { id: true, totalProblems: true, lastSync: true }
     });
 
     if (!contest) throw new Error("Contest not found");
@@ -95,7 +95,8 @@ export class LeaderboardService {
 
     return {
       data,
-      contestTotalProblems: contest.totalProblems
+      contestTotalProblems: contest.totalProblems,
+      contestLastSync: contest.lastSync
     };
   }
 }
