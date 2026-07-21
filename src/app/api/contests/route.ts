@@ -24,7 +24,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, slug, icon, enabled, displayOrder } = body;
+    const { name, slug, icon, enabled, showInNav, displayOrder } = body;
 
     if (!name || !slug) {
       return NextResponse.json({ error: "Name and slug are required" }, { status: 400 });
@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
         slug,
         icon: icon || null,
         enabled: enabled ?? true,
+        showInNav: showInNav ?? true,
         displayOrder: displayOrder ?? 0,
       },
     });
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, name, slug, icon, enabled, displayOrder } = body;
+    const { id, name, slug, icon, enabled, showInNav, displayOrder } = body;
 
     if (!id) {
       return NextResponse.json({ error: "Contest id is required" }, { status: 400 });
@@ -65,6 +66,7 @@ export async function PUT(request: NextRequest) {
         ...(slug !== undefined && { slug }),
         ...(icon !== undefined && { icon }),
         ...(enabled !== undefined && { enabled }),
+        ...(showInNav !== undefined && { showInNav }),
         ...(displayOrder !== undefined && { displayOrder }),
       },
     });

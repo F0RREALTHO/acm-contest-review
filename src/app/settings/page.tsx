@@ -13,6 +13,7 @@ interface Contest {
   slug: string;
   icon: string | null;
   enabled: boolean;
+  showInNav: boolean;
   displayOrder: number;
   lastSync: string | null;
   _count?: { problems: number; leaderboardEntries: number };
@@ -109,6 +110,10 @@ export default function ContestManagementPage() {
 
   const toggleEnabled = (contest: Contest) => {
     updateMutation.mutate({ id: contest.id, enabled: !contest.enabled });
+  };
+
+  const toggleShowInNav = (contest: Contest) => {
+    updateMutation.mutate({ id: contest.id, showInNav: !contest.showInNav });
   };
 
   const startEdit = (contest: Contest) => {
@@ -223,6 +228,7 @@ export default function ContestManagementPage() {
                 <th className="px-4 py-3 font-medium">Name</th>
                 <th className="px-4 py-3 font-medium">Slug</th>
                 <th className="px-4 py-3 font-medium text-center">Active</th>
+                <th className="px-4 py-3 font-medium text-center">Nav Bar</th>
                 <th className="px-4 py-3 font-medium text-center">Problems</th>
                 <th className="px-4 py-3 font-medium text-center">Participants</th>
                 <th className="px-4 py-3 font-medium text-right">Actions</th>
@@ -267,7 +273,7 @@ export default function ContestManagementPage() {
                           className="h-7 text-xs bg-muted border-border font-mono"
                         />
                       </td>
-                      <td className="px-4 py-2 text-center" colSpan={2} />
+                      <td className="px-4 py-2 text-center" colSpan={3} />
                       <td className="px-4 py-2" />
                       <td className="px-4 py-2 text-right">
                         <div className="flex items-center justify-end gap-2">
@@ -296,6 +302,19 @@ export default function ContestManagementPage() {
                           }`}
                         >
                           {contest.enabled ? "Active" : "Inactive"}
+                        </button>
+                      </td>
+                      <td className="px-4 py-2 text-center">
+                        <button
+                          onClick={() => toggleShowInNav(contest)}
+                          className={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider transition-colors cursor-pointer ${
+                            contest.showInNav
+                              ? "bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20"
+                              : "bg-zinc-800 text-zinc-500 border border-zinc-700 hover:bg-zinc-700"
+                          }`}
+                          title={contest.showInNav ? "Visible in top navigation bar" : "Hidden from top navigation bar"}
+                        >
+                          {contest.showInNav ? "Visible" : "Hidden"}
                         </button>
                       </td>
                       <td className="px-4 py-2 font-mono text-xs text-center">{contest._count?.problems ?? "—"}</td>
@@ -342,7 +361,8 @@ export default function ContestManagementPage() {
       <div className="mt-6 text-xs text-muted-foreground space-y-1">
         <p>• Adding a contest automatically creates a navigation tab, enables leaderboard sync, and participant browsing.</p>
         <p>• The <code className="font-mono text-foreground/70">slug</code> must match the HackerRank contest URL (e.g. <code className="font-mono text-foreground/70">acm-summer-challenge-2027</code>).</p>
-        <p>• Inactive contests are hidden from the navigation but data is preserved.</p>
+        <p>• Use <strong>Nav Bar</strong> toggle to show/hide a contest from the top navigation without deactivating it.</p>
+        <p>• Inactive contests are always hidden from the navigation and data is preserved.</p>
       </div>
     </div>
   );

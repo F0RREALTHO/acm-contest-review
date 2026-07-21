@@ -14,6 +14,7 @@ interface ContestTab {
   slug: string;
   icon: string | null;
   enabled: boolean;
+  showInNav: boolean;
   displayOrder: number;
 }
 
@@ -28,7 +29,7 @@ export function Header() {
       const res = await fetch("/api/contests");
       if (!res.ok) return [];
       const data = await res.json();
-      return data.filter((c: ContestTab) => c.enabled);
+      return data.filter((c: ContestTab) => c.enabled && c.showInNav);
     },
     staleTime: 60_000, // cache for 1 minute
   });
