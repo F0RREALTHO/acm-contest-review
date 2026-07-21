@@ -184,122 +184,141 @@ export default function FlaggedPage() {
           <p className="text-muted-foreground max-w-sm">No flagged items found for this filter. Everything looks clean.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredItems.map((item) => {
-            if (item.type === "participant") {
-              const p = item as FlaggedParticipant & { type: string };
-              return (
-                <div key={p.id} className="bg-card border border-border border-l-4 border-l-[#DC2626] rounded-[18px] p-5 flex flex-col justify-between hover:border-border/80 transition-colors shadow-sm relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-16 h-16 bg-[#DC2626]/5 rounded-bl-[100px] pointer-events-none" />
-                  
-                  <div>
-                    <div className="flex items-start justify-between mb-4 relative z-10">
-                      <div>
-                        <h3 className="font-bold text-[#EF4444] text-lg mb-1 flex items-center gap-2">
-                          <Flag className="h-4 w-4" />
-                          <Link href={`/participants/${p.username}`} className="hover:text-[#EF4444]/80 transition-colors">
-                            {p.username}
-                          </Link>
-                        </h3>
-                        <div className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium">
-                          {p.contest.name}
-                        </div>
-                      </div>
-                      <span className="bg-[rgba(220,38,38,0.12)] border border-[rgba(220,38,38,0.35)] text-[#F87171] px-2.5 py-1 rounded-[8px] text-[10px] font-bold uppercase tracking-wider">
-                        {p.reason || "Flagged"}
-                      </span>
-                    </div>
-                    
-                    <div className="mb-6 grid grid-cols-2 gap-4">
-                      <div>
-                        <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 font-bold">Solved</div>
-                        <div className="text-sm font-semibold text-foreground">{p.problemsSolved} Problems</div>
-                      </div>
-                      {p.leaderboard && (
-                        <div>
-                          <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 font-bold">Official Rank</div>
-                          <div className="text-sm font-semibold text-foreground">#{p.leaderboard.officialRank} ({p.leaderboard.score} pts)</div>
-                        </div>
-                      )}
-                      {p.notes && (
-                        <div className="col-span-2 mt-2 text-xs text-muted-foreground bg-[rgba(220,38,38,0.05)] p-3 rounded-lg border border-[rgba(220,38,38,0.1)] font-mono">
-                          {p.notes}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 pt-4 border-t border-border">
-                    <Button 
-                      onClick={() => handleUnflagParticipant(p.username, p.contest.slug)}
-                      variant="outline" 
-                      className="flex-1 rounded-[12px] h-9 text-xs font-medium border-border hover:bg-success/10 hover:text-success hover:border-success/30 transition-colors"
-                    >
-                      Unflag
-                    </Button>
-                    <Link href={`/participants/${p.username}`} className="flex-1">
-                      <Button 
-                        variant="outline"
-                        className="w-full rounded-[12px] h-9 text-xs font-medium border-border hover:bg-accent"
-                      >
-                        Profile
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              );
-            } else {
-              const s = item as FlaggedSubmission & { type: string };
-              return (
-                <div key={s.id} className="bg-card border border-border rounded-[18px] p-5 flex flex-col justify-between hover:border-border/80 transition-colors shadow-sm">
-                  <div>
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <h3 className="font-bold text-foreground text-lg mb-1">
-                          <Link href={`/participants/${s.submission.user.username}`} className="hover:text-primary transition-colors">
-                            {s.submission.user.username}
-                          </Link>
-                        </h3>
-                        <div className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium">
-                          {s.submission.problem.contest?.name || "Unknown"}
-                        </div>
-                      </div>
-                      <span className="bg-warning/10 text-warning px-2.5 py-1 rounded-[8px] text-[10px] font-bold uppercase tracking-wider">
-                        {s.reason || "Flagged"}
-                      </span>
-                    </div>
-                    
-                    <div className="mb-6">
-                      <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 font-bold">Submission</div>
-                      <div className="text-sm font-semibold text-foreground mb-2">{s.submission.problem.name}</div>
-                      {s.notes && (
-                        <div className="text-xs text-muted-foreground bg-warning/5 p-3 rounded-lg border border-warning/10 font-mono">
-                          {s.notes}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 pt-4 border-t border-border">
-                    <Button 
-                      onClick={() => handleUnflagSubmission(s.submissionId)}
-                      variant="outline" 
-                      className="flex-1 rounded-[12px] h-9 text-xs font-medium border-border hover:bg-success/10 hover:text-success hover:border-success/30 transition-colors"
-                    >
-                      Mark Safe
-                    </Button>
-                    <Link href={`/submissions/${s.submissionId}?participant=${s.submission.user.username}`} className="flex-1">
-                      <Button 
-                        className="w-full rounded-[12px] h-9 text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90"
-                      >
-                        Review Code
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              );
+        <div className="space-y-10">
+          {(() => {
+            // Group items by contest name
+            const grouped: Record<string, typeof filteredItems> = {};
+            for (const item of filteredItems) {
+              const contestName = item.type === "participant"
+                ? (item as FlaggedParticipant).contest.name
+                : (item as FlaggedSubmission).submission.problem.contest?.name || "Uncategorized";
+              if (!grouped[contestName]) grouped[contestName] = [];
+              grouped[contestName].push(item);
             }
-          })}
+
+            return Object.entries(grouped).map(([contestName, items]) => (
+              <div key={contestName}>
+                <div className="flex items-center gap-3 mb-4">
+                  <h2 className="text-lg font-bold text-foreground tracking-tight">{contestName}</h2>
+                  <span className="bg-muted text-muted-foreground px-2 py-0.5 rounded-md text-xs font-semibold tabular-nums">
+                    {items.length}
+                  </span>
+                  <div className="flex-1 h-px bg-border" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {items.map((item) => {
+                    if (item.type === "participant") {
+                      const p = item as FlaggedParticipant & { type: string };
+                      return (
+                        <div key={p.id} className="bg-card border border-border border-l-4 border-l-[#DC2626] rounded-[18px] p-5 flex flex-col justify-between hover:border-border/80 transition-colors shadow-sm relative overflow-hidden">
+                          <div className="absolute top-0 right-0 w-16 h-16 bg-[#DC2626]/5 rounded-bl-[100px] pointer-events-none" />
+                          
+                          <div>
+                            <div className="flex items-start justify-between mb-4 relative z-10">
+                              <div>
+                                <h3 className="font-bold text-[#EF4444] text-lg mb-1 flex items-center gap-2">
+                                  <Flag className="h-4 w-4" />
+                                  <Link href={`/participants/${p.username}`} className="hover:text-[#EF4444]/80 transition-colors">
+                                    {p.username}
+                                  </Link>
+                                </h3>
+                              </div>
+                              <span className="bg-[rgba(220,38,38,0.12)] border border-[rgba(220,38,38,0.35)] text-[#F87171] px-2.5 py-1 rounded-[8px] text-[10px] font-bold uppercase tracking-wider">
+                                {p.reason || "Flagged"}
+                              </span>
+                            </div>
+                            
+                            <div className="mb-6 grid grid-cols-2 gap-4">
+                              <div>
+                                <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 font-bold">Solved</div>
+                                <div className="text-sm font-semibold text-foreground">{p.problemsSolved} Problems</div>
+                              </div>
+                              {p.leaderboard && (
+                                <div>
+                                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 font-bold">Official Rank</div>
+                                  <div className="text-sm font-semibold text-foreground">#{p.leaderboard.officialRank} ({p.leaderboard.score} pts)</div>
+                                </div>
+                              )}
+                              {p.notes && (
+                                <div className="col-span-2 mt-2 text-xs text-muted-foreground bg-[rgba(220,38,38,0.05)] p-3 rounded-lg border border-[rgba(220,38,38,0.1)] font-mono">
+                                  {p.notes}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3 pt-4 border-t border-border">
+                            <Button 
+                              onClick={() => handleUnflagParticipant(p.username, p.contest.slug)}
+                              variant="outline" 
+                              className="flex-1 rounded-[12px] h-9 text-xs font-medium border-border hover:bg-success/10 hover:text-success hover:border-success/30 transition-colors"
+                            >
+                              Unflag
+                            </Button>
+                            <Link href={`/participants/${p.username}`} className="flex-1">
+                              <Button 
+                                variant="outline"
+                                className="w-full rounded-[12px] h-9 text-xs font-medium border-border hover:bg-accent"
+                              >
+                                Profile
+                              </Button>
+                            </Link>
+                          </div>
+                        </div>
+                      );
+                    } else {
+                      const s = item as FlaggedSubmission & { type: string };
+                      return (
+                        <div key={s.id} className="bg-card border border-border rounded-[18px] p-5 flex flex-col justify-between hover:border-border/80 transition-colors shadow-sm">
+                          <div>
+                            <div className="flex items-start justify-between mb-4">
+                              <div>
+                                <h3 className="font-bold text-foreground text-lg mb-1">
+                                  <Link href={`/participants/${s.submission.user.username}`} className="hover:text-primary transition-colors">
+                                    {s.submission.user.username}
+                                  </Link>
+                                </h3>
+                              </div>
+                              <span className="bg-warning/10 text-warning px-2.5 py-1 rounded-[8px] text-[10px] font-bold uppercase tracking-wider">
+                                {s.reason || "Flagged"}
+                              </span>
+                            </div>
+                            
+                            <div className="mb-6">
+                              <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 font-bold">Submission</div>
+                              <div className="text-sm font-semibold text-foreground mb-2">{s.submission.problem.name}</div>
+                              {s.notes && (
+                                <div className="text-xs text-muted-foreground bg-warning/5 p-3 rounded-lg border border-warning/10 font-mono">
+                                  {s.notes}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3 pt-4 border-t border-border">
+                            <Button 
+                              onClick={() => handleUnflagSubmission(s.submissionId)}
+                              variant="outline" 
+                              className="flex-1 rounded-[12px] h-9 text-xs font-medium border-border hover:bg-success/10 hover:text-success hover:border-success/30 transition-colors"
+                            >
+                              Mark Safe
+                            </Button>
+                            <Link href={`/submissions/${s.submissionId}?participant=${s.submission.user.username}`} className="flex-1">
+                              <Button 
+                                className="w-full rounded-[12px] h-9 text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90"
+                              >
+                                Review Code
+                              </Button>
+                            </Link>
+                          </div>
+                        </div>
+                      );
+                    }
+                  })}
+                </div>
+              </div>
+            ));
+          })()}
         </div>
       )}
     </div>
