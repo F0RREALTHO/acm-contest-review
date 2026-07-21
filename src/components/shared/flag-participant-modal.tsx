@@ -45,7 +45,7 @@ export function FlagParticipantModal({
           username,
           contestSlug,
           reason,
-          notes: reason === "Other" ? notes : "",
+          notes: notes.trim() || "",
         }),
       });
 
@@ -116,20 +116,18 @@ export function FlagParticipantModal({
               </select>
             </div>
 
-            {reason === "Other" && (
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1.5">
-                  Details <span className="text-destructive">*</span>
-                </label>
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Provide specific details for flagging..."
-                  className="w-full min-h-[100px] p-3 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-shadow resize-none"
-                  required
-                />
-              </div>
-            )}
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1.5">
+                Remark {reason === "Other" && <span className="text-destructive">*</span>}
+              </label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder={reason === "Other" ? "Provide specific details for flagging..." : "Add an optional remark for other reviewers..."}
+                className="w-full min-h-[80px] p-3 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-shadow resize-none"
+                required={reason === "Other"}
+              />
+            </div>
           </div>
 
           <div className="mt-8 flex items-center gap-3 justify-end">
