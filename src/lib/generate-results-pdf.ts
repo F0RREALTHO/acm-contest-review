@@ -65,19 +65,19 @@ function drawPageBackground(doc: jsPDF) {
   const w = doc.internal.pageSize.getWidth();
   const h = doc.internal.pageSize.getHeight();
 
-  // 1. Soft solid base color (very light slate/blue tint)
-  doc.setFillColor(250, 251, 253);
+  // 1. Soft solid base color (light slate/blue tint)
+  doc.setFillColor(238, 242, 246);
   doc.rect(0, 0, w, h, "F");
 
   // 2. Large subtle geometric circles in the bottom left
-  doc.setDrawColor(241, 245, 249);
-  doc.setFillColor(246, 248, 251);
+  doc.setDrawColor(210, 220, 230);
+  doc.setFillColor(226, 232, 240);
   doc.setLineWidth(0.5);
   doc.circle(-20, h + 20, 120, "DF");
   doc.circle(-10, h + 10, 80, "DF");
 
   // 3. Subtle angled accent top right (behind the header)
-  doc.setFillColor(243, 247, 252);
+  doc.setFillColor(230, 236, 244);
   doc.triangle(w, 0, w - 140, 0, w, 140, "F");
 }
 
@@ -217,8 +217,9 @@ export function generateResultsPdf(params: {
       fontSize: 9,
       cellPadding: { top: 3, right: 4, bottom: 3, left: 4 },
       textColor: [26, 26, 46],
-      lineColor: [229, 231, 235],
+      lineColor: [210, 215, 225],
       lineWidth: 0.2,
+      fillColor: [255, 255, 255],
     },
     headStyles: {
       fillColor: [240, 245, 250],
@@ -308,6 +309,7 @@ export function generateResultsPdf(params: {
         textColor: [26, 26, 46],
         lineColor: [229, 231, 235],
         lineWidth: 0.2,
+        fillColor: [255, 255, 255],
       },
       headStyles: {
         fillColor: [254, 243, 230], // Warm amber tint
