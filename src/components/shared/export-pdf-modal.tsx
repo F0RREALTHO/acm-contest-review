@@ -184,7 +184,7 @@ export function ExportPdfModal({
                 </button>
               </div>
 
-              <div className="space-y-1 max-h-[240px] overflow-y-auto rounded-lg border border-border bg-background p-1">
+              <div className="space-y-1 rounded-lg border border-border bg-background p-1">
                 {flaggedParticipants.map((p) => {
                   const isAllowed = allowedUsernames.has(p.username);
                   return (
