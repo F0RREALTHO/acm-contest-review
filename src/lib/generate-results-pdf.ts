@@ -13,6 +13,7 @@ const WARNING_AMBER = "#F59E0B";
 
 export interface PdfParticipant {
   rank: number;
+  hrRank?: number;
   username: string;
   country?: string | null;
   score: number;
@@ -69,7 +70,20 @@ export function generateResultsPdf(params: {
   allowedFlagged: PdfParticipant[];
 }) {
   const { contestName, totalProblems, topX, cleanParticipants, allowedFlagged } = params;
-  const allParticipants = [...cleanParticipants, ...allowedFlagged];
+  
+  // Combine clean and allowed participants, sort by original HackerRank rank
+  const allParticipants = [...cleanParticipants, ...allowedFlagged].sort((a, b) => {
+    // If hrRank is missing, put them at the end
+    if (a.hrRank === undefined) return 1;
+    if (b.hrRank === undefined) return -1;
+    return a.hrRank - b.hrRank;
+  });
+
+  // Re-assign sequential rank based on this new merged order
+  allParticipants.forEach((p, i) => {
+    p.rank = i + 1;
+  });
+
   const generatedDate = new Date().toLocaleDateString("en-IN", {
     year: "numeric",
     month: "long",
@@ -149,15 +163,15 @@ export function generateResultsPdf(params: {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
   doc.setTextColor(26, 26, 46);
-  doc.text(`Top ${topX} Ranked Participants`, margin, currentY + 2);
+  doc.text(`Top ${topX} Ranked Participants${allowedFlagged.length > 0 ? " (Including Allowed)" : ""}`, margin, currentY + 2);
   currentY += 8;
 
   autoTable(doc, {
     startY: currentY,
     head: [["#", "Username", "Country", "Score", "Time", "Solved"]],
-    body: cleanParticipants.map((p) => [
+    body: allParticipants.map((p) => [
       String(p.rank),
-      p.username,
+      p.isFlaggedButAllowed ? `${p.username} *` : p.username,
       p.country || "-",
       String(p.score),
       formatTime(p.timeTaken),

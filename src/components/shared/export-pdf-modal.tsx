@@ -100,6 +100,7 @@ export function ExportPdfModal({
   const handleGenerate = () => {
     const cleanPdf: PdfParticipant[] = selectedClean.map((p, i) => ({
       rank: i + 1,
+      hrRank: p.hrRank,
       username: p.username,
       country: p.country,
       score: p.score,
@@ -109,6 +110,7 @@ export function ExportPdfModal({
 
     const flaggedPdf: PdfParticipant[] = selectedAllowed.map((p) => ({
       rank: 0,
+      hrRank: p.hrRank,
       username: p.username,
       country: p.country,
       score: p.score,
