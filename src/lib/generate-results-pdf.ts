@@ -88,8 +88,9 @@ export function generateResultsPdf(params: {
   topX: number;
   cleanParticipants: PdfParticipant[];
   allowedFlagged: PdfParticipant[];
+  isPublicExport?: boolean;
 }) {
-  const { contestName, totalProblems, topX, cleanParticipants, allowedFlagged } = params;
+  const { contestName, totalProblems, topX, cleanParticipants, allowedFlagged, isPublicExport } = params;
   
   // Combine clean and allowed participants, sort by original HackerRank rank
   const allParticipants = [...cleanParticipants, ...allowedFlagged].sort((a, b) => {
@@ -163,12 +164,17 @@ export function generateResultsPdf(params: {
   let currentY = 62;
 
   // Stats row
-  const stats = [
-    { label: "Total Selected", value: String(allParticipants.length) },
-    { label: "Top Ranked", value: String(cleanParticipants.length) },
-    { label: "Allowed (Flagged)", value: String(allowedFlagged.length) },
-    { label: "Problems", value: String(totalProblems) },
-  ];
+  const stats = isPublicExport
+    ? [
+        { label: "Participants", value: String(allParticipants.length) },
+        { label: "Problems", value: String(totalProblems) },
+      ]
+    : [
+        { label: "Total Selected", value: String(allParticipants.length) },
+        { label: "Top Ranked", value: String(cleanParticipants.length) },
+        { label: "Allowed (Flagged)", value: String(allowedFlagged.length) },
+        { label: "Problems", value: String(totalProblems) },
+      ];
 
   const statWidth = contentWidth / stats.length;
   stats.forEach((stat, i) => {
@@ -197,7 +203,7 @@ export function generateResultsPdf(params: {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
   doc.setTextColor(26, 26, 46);
-  doc.text(`Top ${topX} Ranked Participants${allowedFlagged.length > 0 ? " (Including Allowed)" : ""}`, margin, currentY + 2);
+  doc.text(`Top ${topX} Ranked Participants${!isPublicExport && allowedFlagged.length > 0 ? " (Including Allowed)" : ""}`, margin, currentY + 2);
   currentY += 8;
 
   autoTable(doc, {
@@ -205,7 +211,7 @@ export function generateResultsPdf(params: {
     head: [["#", "Username", "Country", "Score", "Time", "Solved"]],
     body: allParticipants.map((p) => [
       String(p.rank),
-      p.isFlaggedButAllowed ? `${p.username} *` : p.username,
+      !isPublicExport && p.isFlaggedButAllowed ? `${p.username} *` : p.username,
       p.country || "-",
       String(p.score),
       formatTime(p.timeTaken),
@@ -265,7 +271,7 @@ export function generateResultsPdf(params: {
   });
 
   // === ALLOWED FLAGGED PARTICIPANTS (if any) ===
-  if (allowedFlagged.length > 0) {
+  if (!isPublicExport && allowedFlagged.length > 0) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let flagY = (doc as any).lastAutoTable.finalY + 12;
 

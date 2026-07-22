@@ -49,6 +49,7 @@ export function ExportPdfModal({
 }: ExportPdfModalProps) {
   const [topX, setTopX] = useState(30);
   const [allowedUsernames, setAllowedUsernames] = useState<Set<string>>(new Set());
+  const [isPublicExport, setIsPublicExport] = useState(false);
 
   // Separate clean-ranked and flagged participants
   const { cleanRanked, flaggedParticipants } = useMemo(() => {
@@ -127,6 +128,7 @@ export function ExportPdfModal({
       topX: Math.min(topX, maxClean),
       cleanParticipants: cleanPdf,
       allowedFlagged: flaggedPdf,
+      isPublicExport,
     });
 
     onClose();
@@ -230,7 +232,20 @@ export function ExportPdfModal({
 
           {/* Summary */}
           <div className="bg-background border border-border rounded-xl p-4">
-            <div className="text-sm text-muted-foreground mb-2 font-medium">PDF Summary</div>
+            <div className="text-sm text-muted-foreground mb-2 font-medium flex items-center justify-between">
+              PDF Summary
+              {flaggedParticipants.length > 0 && (
+                <label className="flex items-center gap-2 text-xs font-normal cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={isPublicExport}
+                    onChange={(e) => setIsPublicExport(e.target.checked)}
+                    className="rounded border-border bg-background text-primary focus:ring-primary h-3.5 w-3.5"
+                  />
+                  Public Export (hide internal flag details)
+                </label>
+              )}
+            </div>
             <div className="flex items-center gap-2 text-lg font-bold text-foreground">
               <span className="text-primary">{Math.min(topX, maxClean)}</span>
               <span className="text-muted-foreground text-sm font-normal">ranked</span>
