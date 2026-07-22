@@ -90,7 +90,14 @@ export default function SubmissionViewerPage({
   }, [profile, id]);
 
   useEffect(() => {
-    if (submission && !submission.sourceCode && (submission as any).downloadStatus !== "RATE_LIMITED") {
+    if (submission && !submission.sourceCode && (submission as any).downloadStatus !== "RATE_LIMITED" && (submission as any).downloadStatus !== "FAILED") {
+      // If the download queue already has it in progress, poll for completion
+      // instead of firing a duplicate on-demand download
+      if ((submission as any).downloadStatus === "DOWNLOADING") {
+        const poll = setInterval(() => { refetch(); }, 3000);
+        return () => clearInterval(poll);
+      }
+
       setIsDownloading(true);
       fetch("/api/submissions/download", {
         method: "POST",
@@ -98,13 +105,18 @@ export default function SubmissionViewerPage({
         body: JSON.stringify({ submissionId: id, priority: "HIGH" }),
       })
         .then(async (res) => {
-          if (res.ok) {
-            await refetch();
+          if (!res.ok && res.status === 429) {
+            toast.warning("HackerRank rate limit hit — wait a minute before retrying.", { duration: 8000 });
+          } else if (!res.ok) {
+            toast.error("Failed to download source code.");
           }
+          await refetch();
         })
         .finally(() => {
           setIsDownloading(false);
         });
+    } else if ((submission as any)?.downloadStatus === "RATE_LIMITED") {
+      toast.warning("HackerRank rate limit hit — wait a minute before retrying.", { id: "rate-limit", duration: 8000 });
     } else if (submission?.sourceCode) {
       setIsDownloading(false);
     }
@@ -277,6 +289,48 @@ export default function SubmissionViewerPage({
           <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground bg-background">
             <Loader2 className="h-8 w-8 animate-spin mb-4 text-primary" />
             <p>Downloading source code...</p>
+          </div>
+        ) : (submission as any).downloadStatus === "RATE_LIMITED" ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground bg-background gap-3">
+            <p className="text-amber-500">Rate limited by HackerRank. Try again in a moment.</p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-amber-500/30 text-amber-500 hover:bg-amber-500/10"
+              onClick={() => {
+                setIsDownloading(true);
+                fetch("/api/submissions/download", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ submissionId: id, priority: "HIGH" }),
+                })
+                  .then(() => refetch())
+                  .finally(() => setIsDownloading(false));
+              }}
+            >
+              Retry Download
+            </Button>
+          </div>
+        ) : (submission as any).downloadStatus === "FAILED" ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground bg-background gap-3">
+            <p>Download failed.</p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-border hover:bg-accent"
+              onClick={() => {
+                setIsDownloading(true);
+                fetch("/api/submissions/download", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ submissionId: id, priority: "HIGH" }),
+                })
+                  .then(() => refetch())
+                  .finally(() => setIsDownloading(false));
+              }}
+            >
+              Retry Download
+            </Button>
           </div>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-muted-foreground bg-background">
