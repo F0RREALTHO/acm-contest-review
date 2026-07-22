@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSubmission } from "@/hooks/use-submissions";
 import { useContest } from "@/providers/contest-provider";
+import { usePrefetchSubmissions } from "@/hooks/use-prefetch-submissions";
 import { useQuery } from "@tanstack/react-query";
 import { MONACO_LANGUAGE_MAP } from "@/lib/constants";
 import { ArrowLeft, ChevronLeft, ChevronRight, Flag, Loader2, CheckCircle2, ArrowRightLeft } from "lucide-react";
@@ -63,6 +64,13 @@ export default function SubmissionViewerPage({
       return res.json();
     },
     enabled: !!participant,
+  });
+
+  // While reviewing this submission, prefetch all other submissions for this participant
+  // so clicking Prev/Next loads instantly instead of waiting for each download
+  usePrefetchSubmissions(participant || undefined, contest, {
+    dwellMs: 2000,
+    enabled: !!participant && !!profile,
   });
 
   const navigation = useMemo(() => {

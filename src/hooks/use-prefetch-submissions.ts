@@ -15,13 +15,16 @@ export function usePrefetchSubmissions(
   contestSlug: string | undefined,
   { dwellMs = 5000, enabled = true } = {}
 ) {
-  const hasFiredRef = useRef(false);
+  // Track which username we've already prefetched for, so we re-fire
+  // when switching to a different participant but not on re-renders
+  const firedForRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!enabled || !username || hasFiredRef.current) return;
+    if (!enabled || !username) return;
+    if (firedForRef.current === username) return;
 
     const timer = setTimeout(() => {
-      hasFiredRef.current = true;
+      firedForRef.current = username;
 
       // Fire-and-forget — we don't need to await or handle the response
       fetch("/api/submissions/prefetch", {
@@ -39,3 +42,4 @@ export function usePrefetchSubmissions(
     };
   }, [username, contestSlug, dwellMs, enabled]);
 }
+
