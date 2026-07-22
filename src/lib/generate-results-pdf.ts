@@ -61,6 +61,26 @@ function drawAcmLogo(doc: jsPDF, x: number, y: number, size: number) {
   doc.text("ACM", cx, cy + size * 0.08, { align: "center" });
 }
 
+function drawPageBackground(doc: jsPDF) {
+  const w = doc.internal.pageSize.getWidth();
+  const h = doc.internal.pageSize.getHeight();
+
+  // 1. Soft solid base color (very light slate/blue tint)
+  doc.setFillColor(250, 251, 253);
+  doc.rect(0, 0, w, h, "F");
+
+  // 2. Large subtle geometric circles in the bottom left
+  doc.setDrawColor(241, 245, 249);
+  doc.setFillColor(246, 248, 251);
+  doc.setLineWidth(0.5);
+  doc.circle(-20, h + 20, 120, "DF");
+  doc.circle(-10, h + 10, 80, "DF");
+
+  // 3. Subtle angled accent top right (behind the header)
+  doc.setFillColor(243, 247, 252);
+  doc.triangle(w, 0, w - 140, 0, w, 140, "F");
+}
+
 export function generateResultsPdf(params: {
   contestName: string;
   contestIcon?: string | null;
@@ -96,6 +116,20 @@ export function generateResultsPdf(params: {
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 18;
   const contentWidth = pageWidth - margin * 2;
+
+  // Intercept addPage to automatically draw the background on all new pages
+  // eslint-disable-next-line @typescript-eslint/unbound-method
+  const originalAddPage = doc.addPage;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  doc.addPage = function (...args: any[]) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    originalAddPage.apply(this, args as any);
+    drawPageBackground(doc);
+    return this;
+  };
+
+  // Draw background on the first page
+  drawPageBackground(doc);
 
   // === HEADER SECTION ===
 
@@ -237,7 +271,7 @@ export function generateResultsPdf(params: {
     // Check if we need a new page
     if (flagY > doc.internal.pageSize.getHeight() - 60) {
       doc.addPage();
-      flagY = 20;
+      flagY = 20; // reset Y to top margin
     }
 
     doc.setFont("helvetica", "bold");
