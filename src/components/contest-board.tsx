@@ -5,11 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useDebounce } from "@/hooks/use-debounce";
-import { Trophy, Medal, Search, RefreshCw, Download } from "lucide-react";
+import { Trophy, Medal, Search, RefreshCw, Download, FileDown } from "lucide-react";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { SyncStatusBadge } from "@/components/shared/sync-status-badge";
 import { FlagParticipantModal } from "@/components/shared/flag-participant-modal";
+import { ExportPdfModal } from "@/components/shared/export-pdf-modal";
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal, Flag } from "lucide-react";
 import {
@@ -23,6 +24,7 @@ export function ContestBoard({ slug }: { slug: string }) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [flagModalUser, setFlagModalUser] = useState<string | null>(null);
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const debouncedSearch = useDebounce(search, 300);
 
   function formatTime(seconds: number) {
@@ -99,6 +101,17 @@ export function ContestBoard({ slug }: { slug: string }) {
               className="pl-9 h-9 bg-card border-border text-sm focus:border-primary shadow-none rounded-[12px]"
             />
           </div>
+          
+          <Button 
+            variant="outline"
+            className="h-9 gap-2 border-border text-muted-foreground hover:text-foreground hidden md:flex shrink-0"
+            onClick={() => setIsPdfModalOpen(true)}
+            disabled={isLoading || !data?.data}
+          >
+            <FileDown className="h-4 w-4" />
+            Export PDF
+          </Button>
+
           <SyncStatusBadge contestSlug={slug} />
         </div>
       </div>
@@ -278,6 +291,17 @@ export function ContestBoard({ slug }: { slug: string }) {
           username={flagModalUser}
           contestSlug={slug}
           onSuccess={refetchLeaderboard}
+        />
+      )}
+
+      {data && (
+        <ExportPdfModal
+          isOpen={isPdfModalOpen}
+          onClose={() => setIsPdfModalOpen(false)}
+          contestName={contest?.name || contestTitle}
+          contestIcon={contest?.icon}
+          totalProblems={data.contestTotalProblems || 0}
+          leaderboardData={data.data || []}
         />
       )}
     </div>
