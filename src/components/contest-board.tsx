@@ -104,12 +104,12 @@ export function ContestBoard({ slug }: { slug: string }) {
           
           <Button 
             variant="outline"
-            className="h-9 gap-2 border-border text-muted-foreground hover:text-foreground hidden md:flex shrink-0"
+            className="h-9 gap-2 border-border text-muted-foreground hover:text-foreground flex shrink-0 px-3 md:px-4"
             onClick={() => setIsPdfModalOpen(true)}
             disabled={isLoading || !data?.data}
           >
             <FileDown className="h-4 w-4" />
-            Export PDF
+            <span className="hidden md:inline">Export PDF</span>
           </Button>
 
           <SyncStatusBadge contestSlug={slug} />
