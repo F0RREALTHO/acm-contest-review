@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { formatDateTime } from "@/lib/utils";
 import { useContest } from "@/providers/contest-provider";
+import { usePrefetchSubmissions } from "@/hooks/use-prefetch-submissions";
 import { ArrowLeft, ChevronDown, Flag, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FlagParticipantModal } from "@/components/shared/flag-participant-modal";
@@ -27,6 +28,10 @@ export default function ParticipantDetailsPage({
       return res.json();
     },
   });
+
+  // After 5 seconds on this profile, start prefetching all submission source code
+  // so clicking into individual submissions loads instantly
+  usePrefetchSubmissions(username, contest, { enabled: !!profile });
 
   if (isLoading) return (
     <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6">
