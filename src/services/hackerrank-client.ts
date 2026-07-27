@@ -3,6 +3,8 @@ import {
   HRChallengesResponse,
   HRSubmissionsResponse,
   HRSubmissionDetailResponse,
+  HRChallengeDetailResponse,
+  HRTestCasesResponse,
 } from "@/types/hackerrank";
 import { HACKERRANK_BASE_URL } from "@/lib/constants";
 
@@ -229,5 +231,46 @@ export class HackerRankClient {
       100,
       5
     );
+  }
+
+  /**
+   * Fetch full challenge detail including body_html, preview_input, etc.
+   */
+  async getChallengeDetail(
+    contestSlug: string,
+    challengeSlug: string
+  ): Promise<HRChallengeDetailResponse> {
+    const url = `${this.baseUrl}/rest/contests/${contestSlug}/challenges/${challengeSlug}`;
+    const response = await this.fetchWithRetry(url);
+    return response.json();
+  }
+
+  /**
+   * Fetch test cases for a challenge via the admin API.
+   * Returns test case metadata (filenames, scores, etc.).
+   * Requires admin-level cookie access.
+   */
+  async getChallengeTestCases(
+    challengeId: number
+  ): Promise<HRTestCasesResponse> {
+    const url = `${this.baseUrl}/rest/administration/challenges/${challengeId}/test_cases`;
+    const response = await this.fetchWithRetry(url);
+    return response.json();
+  }
+
+  /**
+   * Download a test case file (input or output) via the admin API.
+   * Endpoint: /rest/administration/challenges/{challengeId}/test_cases/{testcaseId}/download?f=input|output
+   * This endpoint redirects to a pre-signed S3 URL.
+   * Requires admin-level cookie access.
+   */
+  async downloadTestCaseFile(
+    challengeId: number,
+    testcaseId: number,
+    type: "input" | "output"
+  ): Promise<string> {
+    const url = `${this.baseUrl}/rest/administration/challenges/${challengeId}/test_cases/${testcaseId}/download?f=${type}`;
+    const response = await this.fetchWithRetry(url);
+    return response.text();
   }
 }

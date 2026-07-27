@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Trophy, Medal, Search, RefreshCw, Download, FileDown } from "lucide-react";
+import { toast } from "sonner";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { SyncStatusBadge } from "@/components/shared/sync-status-badge";
@@ -25,6 +26,7 @@ export function ContestBoard({ slug }: { slug: string }) {
   const [search, setSearch] = useState("");
   const [flagModalUser, setFlagModalUser] = useState<string | null>(null);
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
+  const [isDownloadingQuestions, setIsDownloadingQuestions] = useState(false);
   const debouncedSearch = useDebounce(search, 300);
 
   function formatTime(seconds: number) {
@@ -75,6 +77,37 @@ export function ContestBoard({ slug }: { slug: string }) {
     window.location.reload();
   };
 
+  const handleDownloadQuestions = async () => {
+    setIsDownloadingQuestions(true);
+    const toastId = toast.loading(`Downloading questions & test cases...`, {
+      description: "This may take a few minutes for large contests.",
+    });
+
+    try {
+      const res = await fetch(`/api/contests/download-questions?slug=${slug}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Download failed" }));
+        throw new Error(err.error || `HTTP ${res.status}`);
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${slug}-questions.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast.success("Download complete!", { id: toastId });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Download failed", { id: toastId });
+    } finally {
+      setIsDownloadingQuestions(false);
+    }
+  };
+
   return (
     <div className="w-full">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4 border-b border-border pb-6 pt-2">
@@ -110,6 +143,16 @@ export function ContestBoard({ slug }: { slug: string }) {
           >
             <FileDown className="h-4 w-4" />
             <span className="hidden md:inline">Export PDF</span>
+          </Button>
+
+          <Button 
+            variant="outline"
+            className="h-9 gap-2 border-border text-muted-foreground hover:text-foreground flex shrink-0 px-3 md:px-4"
+            onClick={handleDownloadQuestions}
+            disabled={isDownloadingQuestions}
+          >
+            <Download className={`h-4 w-4 ${isDownloadingQuestions ? "animate-pulse" : ""}`} />
+            <span className="hidden md:inline">{isDownloadingQuestions ? "Downloading..." : "Questions"}</span>
           </Button>
 
           <SyncStatusBadge contestSlug={slug} />

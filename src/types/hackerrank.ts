@@ -81,3 +81,41 @@ export interface HRLeaderboardResponse {
   models: HRLeaderboardEntry[];
   total: number;
 }
+
+// Full challenge detail (from /rest/contests/{slug}/challenges/{slug})
+export interface HRChallengeDetail {
+  id: number;
+  name: string;
+  slug: string;
+  body_html?: string;
+  body?: string;
+  max_score: number;
+  difficulty?: string;
+  category?: string;
+  preview_input?: string;
+  preview_output?: string;
+}
+
+export interface HRChallengeDetailResponse {
+  model: HRChallengeDetail;
+}
+
+// Admin test case list (from /rest/administration/challenges/{id}/testcases)
+export interface HRTestCase {
+  order: number;
+  input_url?: string;
+  output_url?: string;
+  input_file_name?: string;
+  output_file_name?: string;
+  input_size?: number;
+  output_size?: number;
+  sample?: boolean;
+  strength?: number;
+  tag?: string;
+}
+
+export interface HRTestCasesResponse {
+  testcases?: HRTestCase[];
+  data?: HRTestCase[];
+  model?: HRTestCase[];
+}

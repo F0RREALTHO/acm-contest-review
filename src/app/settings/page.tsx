@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Trash2, RefreshCw, GripVertical, Check, X } from "lucide-react";
+import { Plus, Trash2, RefreshCw, GripVertical, Check, X, Download } from "lucide-react";
 
 interface Contest {
   id: string;
@@ -107,6 +107,39 @@ export default function ContestManagementPage() {
     onSuccess: () => toast.success("Sync started in background"),
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const [downloadingSlug, setDownloadingSlug] = useState<string | null>(null);
+
+  const handleDownloadQuestions = async (contestSlug: string, contestName: string) => {
+    setDownloadingSlug(contestSlug);
+    const toastId = toast.loading(`Downloading questions for ${contestName}...`, {
+      description: "This may take a few minutes for large contests.",
+    });
+
+    try {
+      const res = await fetch(`/api/contests/download-questions?slug=${contestSlug}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Download failed" }));
+        throw new Error(err.error || `HTTP ${res.status}`);
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${contestSlug}-questions.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast.success(`Downloaded questions for ${contestName}`, { id: toastId });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Download failed", { id: toastId });
+    } finally {
+      setDownloadingSlug(null);
+    }
+  };
 
   const toggleEnabled = (contest: Contest) => {
     updateMutation.mutate({ id: contest.id, enabled: !contest.enabled });
@@ -328,6 +361,14 @@ export default function ContestManagementPage() {
                             title="Sync Now"
                           >
                             <RefreshCw className={`h-3.5 w-3.5 ${syncMutation.isPending ? "animate-spin" : ""}`} />
+                          </button>
+                          <button
+                            onClick={() => handleDownloadQuestions(contest.slug, contest.name)}
+                            disabled={downloadingSlug === contest.slug}
+                            className="text-xs text-emerald-500 hover:text-emerald-400 font-medium transition-colors"
+                            title="Download Questions & Test Cases"
+                          >
+                            <Download className={`h-3.5 w-3.5 ${downloadingSlug === contest.slug ? "animate-pulse" : ""}`} />
                           </button>
                           <button
                             onClick={() => startEdit(contest)}
