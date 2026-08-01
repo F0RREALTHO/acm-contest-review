@@ -16,6 +16,12 @@ async function main() {
       icon: 'Copy',
       description: 'Mirror of the official regional contest.',
     },
+    {
+      name: 'Summer Mirror Finals',
+      slug: 'acm-summer-mirror-challenge-finals-2026',
+      icon: 'Trophy',
+      description: 'Finals for the Summer Mirror Challenge.',
+    },
   ];
 
   for (const contest of defaultContests) {

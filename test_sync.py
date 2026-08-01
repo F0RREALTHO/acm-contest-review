@@ -2,7 +2,7 @@ import time
 import requests
 
 URL = "https://review-acm-svnit.vercel.app"
-CONTEST = "acm-summer-challenge-2026"
+CONTEST = "acm-summer-mirror-challenge-finals-2026"
 
 print("Starting sync on Vercel...")
 start_resp = requests.post(f"{URL}/api/sync", json={"contestSlug": CONTEST, "fullSync": True})
