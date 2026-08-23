@@ -214,43 +214,11 @@ export class SyncEngine {
 
       console.log(`[Sync] ${newSubmissions.length} submissions fetched`);
 
-      if (newSubmissions.length === 0) {
-        // Nothing new — update sync log and return
-        await prisma.$transaction([
-          prisma.syncLog.update({
-            where: { id: syncLogId },
-            data: {
-              lastSuccessfulSync: new Date(),
-              newestSubmissionId: knownNewestId,
-              newestSubmissionTime: knownNewestTime,
-              submissionsAdded: 0,
-              participantsAdded: 0,
-              acceptedAdded: 0,
-              duration: Date.now() - this.startTime,
-              syncStatus: "success",
-            },
-          }),
-          prisma.contest.update({
-            where: { id: contest.id },
-            data: { lastSync: new Date() }
-          })
-        ]);
-
-        const result: SyncResult = {
-          submissionsAdded: 0,
-          participantsAdded: 0,
-          acceptedAdded: 0,
-          duration: Date.now() - this.startTime,
-          syncStatus: "success",
-        };
-
-        this.emitProgress("complete", "Already up to date!", 0, 0);
-        return result;
-      }
-
-      // PHASE 4: Fetch source code and save to database
       let participantsAdded = 0;
       let acceptedAdded = 0;
+      
+      if (newSubmissions.length > 0) {
+        // PHASE 4: Fetch source code and save to database
       const problemMap = new Map<string, string>();
       const problems = await prisma.problem.findMany({
         where: { contestId: contest.id },
@@ -362,6 +330,8 @@ export class SyncEngine {
           );
       }
 
+      }
+
       // PHASE 5: Fetch Official Leaderboard
       this.emitProgress("fetching_leaderboard", "Fetching official leaderboard...", 0, null);
 
@@ -382,7 +352,7 @@ export class SyncEngine {
              username: entry.hacker,
              hrRank: entry.rank,
              officialRank: entry.index + 1,
-             score: entry.score,
+             score: Number(entry.score) || 0,
              timeTaken: entry.time_taken,
              avatar: entry.avatar || null,
              country: entry.country || null,
@@ -394,8 +364,8 @@ export class SyncEngine {
       }
 
       // PHASE 6: Update SyncLog
-      const newestId = String(newSubmissions[0].id);
-      const newestTime = new Date((newSubmissions[0].created_at as any as number) * 1000);
+      const newestId = newSubmissions.length > 0 ? String(newSubmissions[0].id) : null;
+      const newestTime = newSubmissions.length > 0 ? new Date((newSubmissions[0].created_at as any as number) * 1000) : null;
       const duration = Date.now() - this.startTime;
 
       await prisma.$transaction([
@@ -403,8 +373,8 @@ export class SyncEngine {
           where: { id: syncLogId },
           data: {
             lastSuccessfulSync: new Date(),
-            newestSubmissionId: newestId,
-            newestSubmissionTime: newestTime,
+            newestSubmissionId: newSubmissions.length > 0 ? newestId : knownNewestId,
+            newestSubmissionTime: newSubmissions.length > 0 ? newestTime : knownNewestTime,
             submissionsAdded: newSubmissions.length,
             participantsAdded,
             acceptedAdded,
