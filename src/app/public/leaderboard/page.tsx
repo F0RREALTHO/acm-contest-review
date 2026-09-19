@@ -10,18 +10,27 @@ export default async function PublicLeaderboardIndexPage() {
     orderBy: { displayOrder: "asc" },
   });
 
-  // If only one, go straight to it
+  // If only one public contest, go straight to it
   if (publicContests.length === 1) {
     redirect(`/public/leaderboard/${publicContests[0].slug}`);
   }
 
-  // Fallback: if none set public, use first enabled
+  // Nothing marked public — show a clear "nothing to see" message
   if (publicContests.length === 0) {
-    const fallback = await prisma.contest.findFirst({
-      where: { enabled: true },
-      orderBy: { displayOrder: "asc" },
-    });
-    if (fallback) redirect(`/public/leaderboard/${fallback.slug}`);
+    return (
+      <main className="min-h-screen bg-background flex items-center justify-center p-6">
+        <div className="text-center max-w-sm">
+          <div className="text-6xl mb-5 select-none">🚧</div>
+          <h1 className="text-2xl font-bold text-foreground mb-3 tracking-tight">
+            Nothing to see here
+          </h1>
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            No contest leaderboards are publicly available right now. Check back
+            later — or bother the organizers.
+          </p>
+        </div>
+      </main>
+    );
   }
 
   // Multiple public contests — show a selection page
