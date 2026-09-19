@@ -7,7 +7,7 @@ import { Trophy, Medal, Search, Flag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 
-export function PublicContestBoard({ slug }: { slug: string }) {
+export function PublicContestBoard({ slug, contestName }: { slug: string; contestName?: string }) {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
 
@@ -27,7 +27,7 @@ export function PublicContestBoard({ slug }: { slug: string }) {
     return { label: `${rank}`, icon: null, color: "text-foreground" };
   }
 
-  // Fetch contest metadata dynamically
+  // Use server-provided name if available; otherwise fetch from /api/contests
   const { data: contests } = useQuery({
     queryKey: ["contests-nav-public"],
     queryFn: async () => {
@@ -36,10 +36,15 @@ export function PublicContestBoard({ slug }: { slug: string }) {
       return res.json();
     },
     staleTime: 60_000,
+    enabled: !contestName, // skip fetch if name is already known
   });
 
   const contest = contests?.find((c: any) => c.slug === slug);
-  const contestTitle = contest ? `${contest.icon || ""} ${contest.name}`.trim() : slug;
+  const contestTitle = contestName
+    ? contestName
+    : contest
+    ? `${contest.icon || ""} ${contest.name}`.trim()
+    : slug;
 
   const { data, isLoading } = useQuery({
     queryKey: ["public-leaderboard", slug, debouncedSearch],
