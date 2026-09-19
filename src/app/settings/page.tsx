@@ -150,9 +150,8 @@ export default function ContestManagementPage() {
     updateMutation.mutate({ id: contest.id, showInNav: !contest.showInNav });
   };
 
-  const setPublicContest = (contest: Contest) => {
-    if (contest.isPublic) return; // already public, no-op
-    updateMutation.mutate({ id: contest.id, isPublic: true });
+  const togglePublic = (contest: Contest) => {
+    updateMutation.mutate({ id: contest.id, isPublic: !contest.isPublic });
   };
 
   const startEdit = (contest: Contest) => {
@@ -359,16 +358,15 @@ export default function ContestManagementPage() {
                       </td>
                       <td className="px-4 py-2 text-center">
                         <button
-                          onClick={() => setPublicContest(contest)}
-                          disabled={contest.isPublic}
-                          className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider transition-colors ${
+                          onClick={() => togglePublic(contest)}
+                          className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider transition-colors cursor-pointer ${
                             contest.isPublic
-                              ? "bg-violet-500/15 text-violet-400 border border-violet-500/30 cursor-default"
-                              : "bg-zinc-800 text-zinc-500 border border-zinc-700 hover:bg-zinc-700 cursor-pointer"
+                              ? "bg-violet-500/15 text-violet-400 border border-violet-500/30 hover:bg-violet-500/25"
+                              : "bg-zinc-800 text-zinc-500 border border-zinc-700 hover:bg-zinc-700"
                           }`}
-                          title={contest.isPublic ? "This contest is shown on /public/leaderboard" : "Set as public leaderboard"}
+                          title={contest.isPublic ? "Click to remove from public leaderboard" : "Click to show on /public/leaderboard"}
                         >
-                          {contest.isPublic ? "✦ Active" : "Set"}
+                          {contest.isPublic ? "✦ On" : "Off"}
                         </button>
                       </td>
                       <td className="px-4 py-2 font-mono text-xs text-center">{contest._count?.problems ?? "—"}</td>
@@ -425,7 +423,7 @@ export default function ContestManagementPage() {
         <p>• The <code className="font-mono text-foreground/70">slug</code> must match the HackerRank contest URL (e.g. <code className="font-mono text-foreground/70">acm-summer-challenge-2027</code>).</p>
         <p>• Use <strong>Nav Bar</strong> toggle to show/hide a contest from the top navigation without deactivating it.</p>
         <p>• Inactive contests are always hidden from the navigation and data is preserved.</p>
-        <p>• <strong>Public 🌐</strong> — only one contest can be active at a time. That contest is shown at <code className="font-mono text-foreground/70">/public/leaderboard</code>.</p>
+        <p>• <strong>Public 🌐</strong> — toggle which contests appear on <code className="font-mono text-foreground/70">/public/leaderboard</code>. Multiple can be on at once. If only one is on, visitors go straight to it; if more than one, a selection page is shown.</p>
       </div>
     </div>
   );

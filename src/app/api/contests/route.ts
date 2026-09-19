@@ -59,11 +59,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Contest id is required" }, { status: 400 });
     }
 
-    // isPublic is exclusive: only one contest can be public at a time
-    if (isPublic === true) {
-      await prisma.contest.updateMany({ data: { isPublic: false } });
-    }
-
+    // isPublic is a simple per-contest toggle — multiple contests can be public
     const contest = await prisma.contest.update({
       where: { id },
       data: {
