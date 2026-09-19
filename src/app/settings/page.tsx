@@ -164,7 +164,7 @@ export default function ContestManagementPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6">
+    <div className="max-w-4xl mx-auto py-6 px-4 sm:py-8 sm:px-6">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">Contest Management</h1>
@@ -258,7 +258,8 @@ export default function ContestManagementPage() {
         </div>
       ) : (
         <div className="border border-border rounded-md bg-card overflow-hidden shadow-sm">
-          <table className="w-full text-left text-sm text-muted-foreground">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[860px] text-left text-sm text-muted-foreground">
             <thead className="bg-muted border-b border-border text-muted-foreground">
               <tr>
                 <th className="px-4 py-3 font-medium w-12 text-center">#</th>
@@ -414,6 +415,7 @@ export default function ContestManagementPage() {
               ))}
             </tbody>
           </table>
+          </div>{/* end overflow-x-auto */}
         </div>
       )}
 
