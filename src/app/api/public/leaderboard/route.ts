@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { leaderboardService } from "@/services/leaderboard-service";
+import { prisma } from "@/lib/prisma";
 
 // Enable CORS for this public route
 const corsHeaders = {
@@ -22,6 +23,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { error: "Contest parameter is required" },
         { status: 400, headers: corsHeaders }
+      );
+    }
+
+    // Only serve data for contests explicitly marked as public
+    const contestRecord = await prisma.contest.findUnique({
+      where: { slug: contest },
+      select: { isPublic: true },
+    });
+
+    if (!contestRecord?.isPublic) {
+      return NextResponse.json(
+        { error: "This leaderboard is not publicly available" },
+        { status: 403, headers: corsHeaders }
       );
     }
 
