@@ -21,6 +21,7 @@ model Contest {
   totalProblems Int      @default(0)
   enabled       Boolean  @default(true)
   showInNav     Boolean  @default(true)
+  isPublic      Boolean  @default(false)
   icon          String?
   displayOrder  Int      @default(0)
   lastSync      DateTime?

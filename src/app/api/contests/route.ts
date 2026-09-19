@@ -53,10 +53,15 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, name, slug, icon, enabled, showInNav, displayOrder } = body;
+    const { id, name, slug, icon, enabled, showInNav, displayOrder, isPublic } = body;
 
     if (!id) {
       return NextResponse.json({ error: "Contest id is required" }, { status: 400 });
+    }
+
+    // isPublic is exclusive: only one contest can be public at a time
+    if (isPublic === true) {
+      await prisma.contest.updateMany({ data: { isPublic: false } });
     }
 
     const contest = await prisma.contest.update({
@@ -68,6 +73,7 @@ export async function PUT(request: NextRequest) {
         ...(enabled !== undefined && { enabled }),
         ...(showInNav !== undefined && { showInNav }),
         ...(displayOrder !== undefined && { displayOrder }),
+        ...(isPublic !== undefined && { isPublic }),
       },
     });
 

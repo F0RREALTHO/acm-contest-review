@@ -2,11 +2,18 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 
 export default async function PublicLeaderboardIndexPage() {
-  // Fetch the first enabled contest ordered by displayOrder
-  const contest = await prisma.contest.findFirst({
-    where: { enabled: true },
-    orderBy: { displayOrder: "asc" },
+  // First try the contest explicitly marked as public
+  let contest = await prisma.contest.findFirst({
+    where: { isPublic: true },
   });
+
+  // Fallback: first enabled contest by displayOrder
+  if (!contest) {
+    contest = await prisma.contest.findFirst({
+      where: { enabled: true },
+      orderBy: { displayOrder: "asc" },
+    });
+  }
 
   if (contest) {
     redirect(`/public/leaderboard/${contest.slug}`);
